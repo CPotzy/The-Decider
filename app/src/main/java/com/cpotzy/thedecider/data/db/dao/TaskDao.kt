@@ -22,6 +22,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isActive = 1")
     suspend fun listActive(): List<TaskEntity>
 
+    @Query("SELECT * FROM tasks")
+    suspend fun listAll(): List<TaskEntity>
+
     @Query("SELECT COUNT(*) FROM tasks")
     suspend fun count(): Int
 

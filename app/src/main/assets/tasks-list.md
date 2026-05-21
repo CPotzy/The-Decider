@@ -24,8 +24,6 @@ All registered tasks grouped by recurrence.
 - Listen to a class
 
 ## Bi-daily (every 2 days)
-- Exercise (HIIT workout)
-- Weights
 - Fold and iron laundry
 - Going for a walk
 - Take washing out & hang
@@ -51,16 +49,16 @@ All registered tasks grouped by recurrence.
 - Change duvet cover
 
 ## Monthly
-- Reorganize pantry section
-- Clean car
+- Reorganize kitchen drawers
+- Reorganize pantry
+- Reorganize above oven
+- Reorganize below oven
+- Reorganize below sink
+- Reorganize stove cupboard
+- Reorganize island cupboard
+- Reorganize buckets area
 - Vacuum couch
 
 ## Bimonthly (every 2 months)
-- Mow the lawn
-- Clean windows
-- Clean AC filter
-
-## Anytime (as needed)
-- Empty trash bin
-- Compost
-- Recycling
+- Clean windows (inside)
+- Clean windows (outside)

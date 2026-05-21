@@ -36,6 +36,8 @@ class TaskRepository(
 
     suspend fun setActive(id: Long, isActive: Boolean) = taskDao.setActive(id, isActive)
 
+    suspend fun listAllRaw(): List<TaskEntity> = taskDao.listAll()
+
     suspend fun listEligibleForSelection(now: Instant = clock.now()): List<Task> {
         return listActiveWithLastDone().filter { task ->
             val cadenceDays = task.cadence.cadenceDays

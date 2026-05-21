@@ -20,7 +20,6 @@ object SeedSteps {
             StepDef("Clear the floor (buckets, chairs, rubbish bin, coffee table)", 180),
             StepDef("Get the vacuum out", 30),
             StepDef("Vacuum downstairs floors", 240),
-            StepDef("Vacuum the stairs", 180),
             StepDef("Empty the vacuum if full", 60),
             StepDef("Vacuum upstairs floors", 240),
             StepDef("Put the vacuum away", 30),
@@ -84,24 +83,11 @@ object SeedSteps {
         ),
 
         // Bi-daily
-        "Exercise (HIIT workout)" to listOf(
-            StepDef("Warm-up (light cardio)", 120),
-            StepDef("Round 1", 180),
-            StepDef("Round 2", 180),
-            StepDef("Round 3", 180),
-            StepDef("Cool-down stretch", 120),
-        ),
-        "Weights" to listOf(
-            StepDef("Warm-up (light reps)", 180),
-            StepDef("Upper body set", 600),
-            StepDef("Lower body set", 600),
-            StepDef("Cool-down stretch", 180),
-        ),
         "Fold and iron laundry" to listOf(
-            StepDef("Sort the pile by type", 120),
-            StepDef("Fold everything that doesn't need ironing", 480),
-            StepDef("Iron formal/wrinkled items", 480),
-            StepDef("Stack folded clothes by destination drawer", 90),
+            StepDef("Sort the pile by type", 180),
+            StepDef("Fold everything that doesn't need ironing", 720),
+            StepDef("Iron formal/wrinkled items", 720),
+            StepDef("Stack folded clothes by destination drawer", 135),
         ),
         "Take washing out & hang" to listOf(
             StepDef("Open the washing machine", 10),
@@ -109,6 +95,7 @@ object SeedSteps {
             StepDef("Hang on the line", 300),
         ),
         "Put washing machine on" to listOf(
+            StepDef("Separate whites from colors", 60),
             StepDef("Load clothes", 60),
             StepDef("Add detergent", 20),
             StepDef("Select the cycle", 15),
@@ -130,6 +117,7 @@ object SeedSteps {
             StepDef("Scrub the toilet bowl", 120),
             StepDef("Wipe the floor", 180),
             StepDef("Take out bathroom trash", 60),
+            StepDef("Put in a fresh bin liner", 30),
         ),
         "Change bed sheets and vacuum bed" to listOf(
             StepDef("Strip the sheets", 120),
@@ -138,7 +126,6 @@ object SeedSteps {
             StepDef("Put the duvet and pillows back", 180),
         ),
         "Clean shower" to listOf(
-            StepDef("Remove products from shelves", 60),
             StepDef("Spray cleaner on walls and floor", 60),
             StepDef("Scrub the walls and floor", 300),
             StepDef("Rinse and squeegee dry", 120),
@@ -158,6 +145,8 @@ object SeedSteps {
             StepDef("Nightstands", 60),
             StepDef("Headboard", 60),
             StepDef("Lampshades", 60),
+            StepDef("Desk", 120),
+            StepDef("Vinyl records", 120),
         ),
         "Face mask" to listOf(
             StepDef("Wash your face", 60),
@@ -187,69 +176,46 @@ object SeedSteps {
             StepDef("Wipe the outside", 120),
         ),
         "Change duvet cover" to listOf(
-            StepDef("Remove old cover", 60),
-            StepDef("Turn new cover inside out", 30),
-            StepDef("Grab the corners of the duvet through the cover", 60),
-            StepDef("Shake the duvet down into place", 60),
+            StepDef("Remove old cover", 360),
+            StepDef("Turn new cover inside out", 180),
+            StepDef("Grab the corners of the duvet through the cover", 360),
+            StepDef("Shake the duvet down into place", 300),
         ),
 
-        // Monthly
-        "Reorganize pantry section" to listOf(
-            StepDef("Pick one shelf or section", 30),
-            StepDef("Empty it", 180),
-            StepDef("Wipe the shelf", 120),
-            StepDef("Categorize items", 180),
-            StepDef("Put them back organized", 240),
-        ),
-        "Clean car" to listOf(
-            StepDef("Take out trash and personal items", 180),
-            StepDef("Vacuum the interior", 420),
-            StepDef("Wipe the dash and console", 180),
-            StepDef("Hose down the exterior", 180),
-            StepDef("Soap the body", 300),
-            StepDef("Rinse", 180),
-        ),
+        // Monthly — one task per kitchen section (instead of pick-random).
+        // All follow the same template; edit individually as needed.
+        "Reorganize kitchen drawers" to reorganizeSteps(),
+        "Reorganize pantry" to reorganizeSteps(),
+        "Reorganize above oven" to reorganizeSteps(),
+        "Reorganize below oven" to reorganizeSteps(),
+        "Reorganize below sink" to reorganizeSteps(),
+        "Reorganize stove cupboard" to reorganizeSteps(),
+        "Reorganize island cupboard" to reorganizeSteps(),
+        "Reorganize buckets area" to reorganizeSteps(),
         "Vacuum couch" to listOf(
             StepDef("Remove cushions", 30),
             StepDef("Vacuum the frame", 180),
+            StepDef("Vacuum behind the couch", 120),
             StepDef("Vacuum both sides of each cushion", 300),
             StepDef("Put cushions back", 30),
         ),
 
         // Bimonthly
-        "Mow the lawn" to listOf(
-            StepDef("Clear the lawn of obstacles", 120),
-            StepDef("Check the mower has fuel/charge", 60),
-            StepDef("Mow in straight lines", 1200),
-            StepDef("Edge the borders", 300),
+        "Clean windows (inside)" to listOf(
+            StepDef("Spray cleaner inside", 120),
+            StepDef("Wipe inside in S-pattern", 600),
         ),
-        "Clean windows" to listOf(
-            StepDef("Spray cleaner inside", 60),
-            StepDef("Wipe inside in S-pattern", 300),
-            StepDef("Spray cleaner outside", 60),
-            StepDef("Wipe outside in S-pattern", 300),
+        "Clean windows (outside)" to listOf(
+            StepDef("Spray cleaner outside", 120),
+            StepDef("Wipe outside in S-pattern", 600),
         ),
-        "Clean AC filter" to listOf(
-            StepDef("Turn off the AC", 15),
-            StepDef("Remove the filter", 60),
-            StepDef("Rinse under water", 120),
-            StepDef("Let it dry, then reinstall", 60),
-        ),
+    )
 
-        // Anytime
-        "Empty trash bin" to listOf(
-            StepDef("Tie the bag", 15),
-            StepDef("Take it to the outside bin", 60),
-        ),
-        "Compost" to listOf(
-            StepDef("Empty the indoor compost bin", 60),
-            StepDef("Rinse the bin", 60),
-        ),
-        "Recycling" to listOf(
-            StepDef("Bring the bag to the recycling area", 60),
-            StepDef("Separate by type (paper, plastic, glass)", 120),
-            StepDef("Place each in the correct bin", 60),
-        ),
+    private fun reorganizeSteps(): List<StepDef> = listOf(
+        StepDef("Empty it", 360),
+        StepDef("Wipe the surface", 240),
+        StepDef("Categorize items", 360),
+        StepDef("Put them back organized", 480),
     )
 
     fun forTitle(title: String): List<StepDef> = byTitle[title] ?: emptyList()

@@ -59,23 +59,44 @@ object TaskSeeder {
             }
             repo.insertAll(entities)
         } else {
-            // Existing install: add any tasks that exist in markdown but not yet in DB
-            val existingTitles = repo.listActiveWithLastDone().map { it.title }.toSet()
-            val newSeeds = seedTasks.filter { it.title !in existingTitles }
-            if (newSeeds.isNotEmpty()) {
-                repo.insertAll(newSeeds.map { seed ->
-                    TaskEntity(
-                        title = seed.title,
-                        cadence = seed.cadence,
-                        energy = defaultEnergy(seed.title),
-                        duration = defaultDuration(seed.title),
-                        timeWindow = defaultTimeWindow(seed.title),
-                        createdAt = now,
-                    )
-                })
-            }
+            reconcileTasks(repo, seedTasks, now)
         }
         reconcileSteps(repo, stepDao)
+    }
+
+    private suspend fun reconcileTasks(repo: TaskRepository, seedTasks: List<SeedTask>, now: java.time.Instant) {
+        val seedByTitle = seedTasks.associateBy { it.title }
+        val allInDb = repo.listAllRaw()
+        val dbByTitle = allInDb.associateBy { it.title }
+
+        // Add tasks that exist in markdown but not in DB
+        val toInsert = seedTasks
+            .filter { it.title !in dbByTitle.keys }
+            .map { seed ->
+                TaskEntity(
+                    title = seed.title,
+                    cadence = seed.cadence,
+                    energy = defaultEnergy(seed.title),
+                    duration = defaultDuration(seed.title),
+                    timeWindow = defaultTimeWindow(seed.title),
+                    createdAt = now,
+                )
+            }
+        if (toInsert.isNotEmpty()) repo.insertAll(toInsert)
+
+        // Reactivate tasks that exist in markdown and are currently inactive
+        allInDb.forEach { row ->
+            if (row.title in seedByTitle.keys && !row.isActive) {
+                repo.setActive(row.id, true)
+            }
+        }
+
+        // Deactivate tasks that are no longer in markdown (preserves history)
+        allInDb.forEach { row ->
+            if (row.title !in seedByTitle.keys && row.isActive) {
+                repo.setActive(row.id, false)
+            }
+        }
     }
 
     private suspend fun reconcileSteps(repo: TaskRepository, stepDao: StepDao) {
