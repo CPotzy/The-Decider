@@ -6,6 +6,7 @@ import com.cpotzy.thedecider.data.repo.CompletionRepository
 import com.cpotzy.thedecider.data.repo.SnoozeRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.data.seed.TaskSeeder
+import com.cpotzy.thedecider.data.update.UpdateChecker
 import com.cpotzy.thedecider.domain.select.ContextFilter
 import com.cpotzy.thedecider.domain.select.PressureCalculator
 import com.cpotzy.thedecider.domain.select.SelectionService
@@ -39,4 +40,10 @@ class AppGraph(app: Application) {
     val pressureCalculator = PressureCalculator()
     val contextFilter = ContextFilter()
     val selectionService = SelectionService(pressureCalculator, contextFilter)
+
+    val updateChecker = UpdateChecker(
+        owner = BuildConfig.GITHUB_OWNER,
+        repo = BuildConfig.GITHUB_REPO,
+        currentSha = BuildConfig.GIT_SHA,
+    )
 }

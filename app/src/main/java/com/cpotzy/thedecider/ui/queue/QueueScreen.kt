@@ -1,17 +1,24 @@
 package com.cpotzy.thedecider.ui.queue
 
+import android.content.Intent
+import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.cpotzy.thedecider.ui.queue.components.ModeChipRow
@@ -32,8 +39,22 @@ fun QueueScreen(
     val animatedOffset by animateFloatAsState(targetValue = offsetX, label = "swipeOffset")
 
     val dragState = rememberDraggableState { delta -> offsetX += delta }
+    val context = LocalContext.current
 
     Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp)) {
+        val update = state.update
+        if (update != null && !state.updateDismissed) {
+            UpdateBanner(
+                onDownload = {
+                    val intent = Intent(Intent.ACTION_VIEW, Uri.parse(update.releaseUrl))
+                        .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    viewModel.dismissUpdateBanner()
+                },
+                onDismiss = { viewModel.dismissUpdateBanner() },
+            )
+            Spacer(Modifier.height(16.dp))
+        }
         ModeChipRow(
             chips = state.modeChips,
             selected = state.mode,
@@ -121,5 +142,36 @@ fun QueueScreen(
             },
             onDismiss = { showChooser = false },
         )
+    }
+}
+
+@Composable
+private fun UpdateBanner(onDownload: () -> Unit, onDismiss: () -> Unit) {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = Color(0xFFE8F1FF),
+        tonalElevation = 1.dp,
+    ) {
+        Row(
+            modifier = Modifier.padding(start = 16.dp, end = 8.dp, top = 12.dp, bottom = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    "Update available",
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    "Tap to download the latest build",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f),
+                )
+            }
+            TextButton(onClick = onDownload) { Text("Download") }
+            TextButton(onClick = onDismiss) { Text("Later") }
+        }
     }
 }

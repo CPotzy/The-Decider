@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.cpotzy.thedecider.data.repo.CompletionRepository
 import com.cpotzy.thedecider.data.repo.SnoozeRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
+import com.cpotzy.thedecider.data.update.UpdateChecker
+import com.cpotzy.thedecider.data.update.UpdateInfo
 import com.cpotzy.thedecider.domain.model.PressureTier
 import com.cpotzy.thedecider.domain.model.Task
 import com.cpotzy.thedecider.domain.select.ModeChip
@@ -24,6 +26,8 @@ data class QueueUiState(
     val mode: ModeChip = ModeChip.All,
     val modeChips: List<ModeChip> = ModeChip.defaults,
     val emptyState: Boolean = false,
+    val update: UpdateInfo? = null,
+    val updateDismissed: Boolean = false,
 )
 
 class QueueViewModel(
@@ -32,6 +36,7 @@ class QueueViewModel(
     private val snoozeRepository: SnoozeRepository,
     private val selectionService: SelectionService,
     private val pressureCalc: PressureCalculator,
+    private val updateChecker: UpdateChecker,
     private val clock: Clock,
     private val zone: ZoneId = ZoneId.systemDefault(),
 ) : ViewModel() {
@@ -39,7 +44,21 @@ class QueueViewModel(
     private val _state = MutableStateFlow(QueueUiState())
     val state: StateFlow<QueueUiState> = _state.asStateFlow()
 
-    init { refresh() }
+    init {
+        refresh()
+        checkForUpdate()
+    }
+
+    fun dismissUpdateBanner() {
+        _state.value = _state.value.copy(updateDismissed = true)
+    }
+
+    private fun checkForUpdate() {
+        viewModelScope.launch {
+            val info = updateChecker.checkForUpdate()
+            if (info != null) _state.value = _state.value.copy(update = info)
+        }
+    }
 
     fun setMode(mode: ModeChip) {
         _state.value = _state.value.copy(mode = mode)

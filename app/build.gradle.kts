@@ -5,6 +5,19 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+fun gitSha(): String {
+    System.getenv("GITHUB_SHA")?.let { if (it.isNotBlank()) return it }
+    return try {
+        val process = ProcessBuilder("git", "rev-parse", "HEAD")
+            .directory(rootDir)
+            .redirectErrorStream(true)
+            .start()
+        process.inputStream.bufferedReader().readText().trim().take(40)
+    } catch (e: Exception) {
+        "unknown"
+    }
+}
+
 android {
     namespace = "com.cpotzy.thedecider"
     compileSdk = 34
@@ -16,6 +29,9 @@ android {
         versionCode = 1
         versionName = "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+        buildConfigField("String", "GIT_SHA", "\"${gitSha()}\"")
+        buildConfigField("String", "GITHUB_OWNER", "\"CPotzy\"")
+        buildConfigField("String", "GITHUB_REPO", "\"The-Decider\"")
     }
 
     buildTypes {
@@ -35,7 +51,10 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions { jvmTarget = "17" }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 ksp {

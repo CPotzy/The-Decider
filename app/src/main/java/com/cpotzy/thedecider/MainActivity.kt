@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
                     snoozeRepository = graph.snoozeRepository,
                     selectionService = graph.selectionService,
                     pressureCalc = graph.pressureCalculator,
+                    updateChecker = graph.updateChecker,
                     clock = graph.clock,
                 ) as T
             }
