@@ -34,11 +34,15 @@ class TaskRepository(
                 isActive = e.isActive,
                 createdAt = e.createdAt,
                 lastDoneAt = lastDone,
+                dependsOnTitles = e.dependsOnTitles,
             )
         }
     }
 
     suspend fun setActive(id: Long, isActive: Boolean) = taskDao.setActive(id, isActive)
+
+    suspend fun updateDependsOn(id: Long, deps: List<String>) =
+        taskDao.setDependsOnRaw(id, deps.joinToString("|"))
 
     suspend fun delete(id: Long) = taskDao.delete(id)
 
@@ -64,11 +68,23 @@ class TaskRepository(
     }
 
     suspend fun listEligibleForSelection(now: Instant = clock.now()): List<Task> {
-        return listActiveWithLastDone().filter { task ->
+        val all = listActiveWithLastDone()
+        val byTitle = all.associateBy { it.title }
+        return all.filter { task ->
             val cadenceDays = task.cadence.cadenceDays
-            if (cadenceDays == null) return@filter true
-            val ref = task.lastDoneAt ?: task.createdAt
-            ChronoUnit.HOURS.between(ref, now) >= cadenceDays * 24
+            val cadencePass = if (cadenceDays == null) {
+                true
+            } else {
+                val ref = task.lastDoneAt ?: task.createdAt
+                ChronoUnit.HOURS.between(ref, now) >= cadenceDays * 24
+            }
+            if (!cadencePass) return@filter false
+            task.dependsOnTitles.all { depTitle ->
+                val dep = byTitle[depTitle] ?: return@all true
+                val depDone = dep.lastDoneAt ?: return@all false
+                val depCadenceDays = dep.cadence.cadenceDays ?: return@all true
+                ChronoUnit.HOURS.between(depDone, now) < depCadenceDays * 24
+            }
         }
     }
 }

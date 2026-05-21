@@ -19,4 +19,5 @@ data class TaskEntity(
     val isActive: Boolean = true,
     val createdAt: Instant,
     val isUserCreated: Boolean = false,
+    val dependsOnTitles: List<String> = emptyList(),
 )

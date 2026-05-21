@@ -12,4 +12,5 @@ data class Task(
     val isActive: Boolean,
     val createdAt: Instant,
     val lastDoneAt: Instant?,
+    val dependsOnTitles: List<String> = emptyList(),
 )

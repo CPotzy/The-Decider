@@ -30,4 +30,8 @@ class Converters {
 
     @TypeConverter fun snoozeKindToString(v: SnoozeKind): String = v.name
     @TypeConverter fun stringToSnoozeKind(v: String): SnoozeKind = SnoozeKind.valueOf(v)
+
+    @TypeConverter fun titleListToString(v: List<String>): String = v.joinToString("|")
+    @TypeConverter fun stringToTitleList(v: String): List<String> =
+        if (v.isEmpty()) emptyList() else v.split("|")
 }

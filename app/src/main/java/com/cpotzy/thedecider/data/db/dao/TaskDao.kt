@@ -31,6 +31,9 @@ interface TaskDao {
     @Query("UPDATE tasks SET isActive = :isActive WHERE id = :id")
     suspend fun setActive(id: Long, isActive: Boolean)
 
+    @Query("UPDATE tasks SET dependsOnTitles = :raw WHERE id = :id")
+    suspend fun setDependsOnRaw(id: Long, raw: String)
+
     @Query("DELETE FROM tasks WHERE id = :id")
     suspend fun delete(id: Long)
 }

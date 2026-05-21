@@ -55,6 +55,7 @@ object TaskSeeder {
                     duration = defaultDuration(seed.title),
                     timeWindow = defaultTimeWindow(seed.title),
                     createdAt = now,
+                    dependsOnTitles = SeedDependencies.forTitle(seed.title),
                 )
             }
             repo.insertAll(entities)
@@ -80,9 +81,19 @@ object TaskSeeder {
                     duration = defaultDuration(seed.title),
                     timeWindow = defaultTimeWindow(seed.title),
                     createdAt = now,
+                    dependsOnTitles = SeedDependencies.forTitle(seed.title),
                 )
             }
         if (toInsert.isNotEmpty()) repo.insertAll(toInsert)
+
+        // Update dependency lists on existing seed-managed tasks if they have drifted
+        allInDb.forEach { row ->
+            if (row.isUserCreated) return@forEach
+            val expected = SeedDependencies.forTitle(row.title)
+            if (row.dependsOnTitles != expected) {
+                repo.updateDependsOn(row.id, expected)
+            }
+        }
 
         // Reactivate tasks that exist in markdown and are currently inactive
         allInDb.forEach { row ->
