@@ -14,12 +14,7 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Periodic worker that decides whether to fire a nudge notification.
- *
- * Rules (hardcoded for v1):
- *  - Only inside the nudge window (09:00–21:00 local)
- *  - At most 3 nudges per day
- *  - At least 60 minutes between nudges
- *  - Skip if the app was opened in the last 2 hours
+ * Rules come from [NudgeSettings] so they can be tuned from the settings screen.
  */
 class NudgeWorker(
     appContext: Context,
@@ -29,18 +24,23 @@ class NudgeWorker(
     override suspend fun doWork(): Result {
         val ctx = applicationContext
         val prefs = NudgePrefs(ctx)
+        val settings = NudgeSettings(ctx)
         val zone = ZoneId.systemDefault()
         val now = Instant.now()
         val localNow = now.atZone(zone).toLocalTime()
 
-        if (localNow < WINDOW_START || localNow >= WINDOW_END) return Result.success()
-        if (prefs.nudgesFiredToday(zone) >= MAX_PER_DAY) return Result.success()
+        val windowStart = LocalTime.of(settings.windowStartHour, 0)
+        val windowEnd = if (settings.windowEndHour >= 24) LocalTime.MAX else LocalTime.of(settings.windowEndHour, 0)
+        if (localNow < windowStart || localNow >= windowEnd) return Result.success()
+        if (prefs.nudgesFiredToday(zone) >= settings.maxPerDay) return Result.success()
 
+        val minGap = Duration.ofMinutes(settings.minGapMinutes.toLong())
         prefs.lastNudgeAt?.let { last ->
-            if (Duration.between(last, now) < MIN_GAP_BETWEEN_NUDGES) return Result.success()
+            if (Duration.between(last, now) < minGap) return Result.success()
         }
+        val quiet = Duration.ofMinutes(settings.quietAfterOpenMinutes.toLong())
         prefs.lastAppOpenAt?.let { lastOpen ->
-            if (Duration.between(lastOpen, now) < QUIET_AFTER_OPEN) return Result.success()
+            if (Duration.between(lastOpen, now) < quiet) return Result.success()
         }
 
         Notifications.showNudge(ctx)
@@ -51,11 +51,6 @@ class NudgeWorker(
 
     companion object {
         private const val UNIQUE_NAME = "nudge-worker"
-        private val WINDOW_START = LocalTime.of(9, 0)
-        private val WINDOW_END = LocalTime.of(21, 0)
-        private const val MAX_PER_DAY = 3
-        private val MIN_GAP_BETWEEN_NUDGES = Duration.ofMinutes(60)
-        private val QUIET_AFTER_OPEN = Duration.ofHours(2)
 
         fun schedule(context: Context) {
             val request = PeriodicWorkRequestBuilder<NudgeWorker>(

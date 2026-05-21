@@ -36,6 +36,7 @@ fun QueueScreen(
     onAcceptTask: (Long) -> Unit,
     onOpenHistory: () -> Unit,
     onOpenTasks: () -> Unit,
+    onOpenSettings: () -> Unit,
     taskRepository: TaskRepository,
     now: Instant = Instant.now(),
 ) {
@@ -60,6 +61,7 @@ fun QueueScreen(
         ) {
             TextButton(onClick = onOpenTasks) { Text("Tasks") }
             TextButton(onClick = onOpenHistory) { Text("History") }
+            TextButton(onClick = onOpenSettings) { Text("Settings") }
         }
         val update = state.update
         if (update != null && !state.updateDismissed) {

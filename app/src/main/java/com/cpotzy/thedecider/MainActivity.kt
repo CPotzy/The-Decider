@@ -25,6 +25,7 @@ import com.cpotzy.thedecider.ui.history.HistoryScreen
 import com.cpotzy.thedecider.ui.manage.TaskListScreen
 import com.cpotzy.thedecider.ui.queue.QueueScreen
 import com.cpotzy.thedecider.ui.queue.QueueViewModel
+import com.cpotzy.thedecider.ui.settings.SettingsScreen
 import com.cpotzy.thedecider.ui.task.TaskDetailScreen
 import com.cpotzy.thedecider.ui.task.TaskDetailViewModel
 import com.cpotzy.thedecider.ui.theme.TheDeciderTheme
@@ -82,8 +83,12 @@ private fun AppNav(graph: AppGraph) {
                 onAcceptTask = { taskId -> navController.navigate("task/$taskId") },
                 onOpenHistory = { navController.navigate("history") },
                 onOpenTasks = { navController.navigate("tasks") },
+                onOpenSettings = { navController.navigate("settings") },
                 taskRepository = graph.taskRepository,
             )
+        }
+        composable("settings") {
+            SettingsScreen(onBack = { navController.popBackStack() })
         }
         composable("history") {
             HistoryScreen(
