@@ -12,6 +12,7 @@ captures/
 *.aab
 *.keystore
 *.jks
+!app/debug.keystore
 
 # Secrets
 local.properties
