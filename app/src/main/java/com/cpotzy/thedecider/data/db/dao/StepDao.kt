@@ -11,4 +11,7 @@ interface StepDao {
 
     @Query("SELECT * FROM steps WHERE taskId = :taskId ORDER BY `order` ASC")
     suspend fun forTask(taskId: Long): List<StepEntity>
+
+    @Query("UPDATE steps SET durationSeconds = :durationSeconds WHERE id = :id")
+    suspend fun updateDuration(id: Long, durationSeconds: Int?)
 }

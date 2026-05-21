@@ -20,4 +20,5 @@ data class StepEntity(
     val taskId: Long,
     val order: Int,
     val content: String,
+    val durationSeconds: Int? = null,
 )

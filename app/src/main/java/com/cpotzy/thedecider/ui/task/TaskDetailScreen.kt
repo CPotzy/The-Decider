@@ -8,9 +8,12 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import com.cpotzy.thedecider.data.db.entities.StepEntity
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,10 +90,7 @@ private fun AtomicTaskView() {
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Text(
-            "Just do it.",
-            style = MaterialTheme.typography.headlineLarge,
-        )
+        Text("Just do it.", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(12.dp))
         Text(
             "Tap \"Done with task\" when you're finished.",
@@ -128,19 +128,29 @@ private fun ChecklistView(
                 ) {
                     Checkbox(checked = checked, onCheckedChange = { onToggle(step.id) })
                     Spacer(Modifier.width(8.dp))
-                    Text(
-                        step.content,
-                        style = MaterialTheme.typography.bodyLarge.copy(
-                            textDecoration = if (checked) TextDecoration.LineThrough else null,
-                        ),
-                        color = if (checked)
-                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
-                        else MaterialTheme.colorScheme.onSurface,
-                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            step.content,
+                            style = MaterialTheme.typography.bodyLarge.copy(
+                                textDecoration = if (checked) TextDecoration.LineThrough else null,
+                            ),
+                            color = if (checked)
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                            else MaterialTheme.colorScheme.onSurface,
+                        )
+                        step.durationSeconds?.let { secs ->
+                            Spacer(Modifier.height(2.dp))
+                            Text(
+                                formatDuration(secs),
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                            )
+                        }
+                    }
                 }
             }
         }
-        Spacer(Modifier.height(96.dp)) // room above the bottom bar
+        Spacer(Modifier.height(96.dp))
     }
 }
 
@@ -165,19 +175,32 @@ private fun FocusModeView(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
         )
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
         Surface(
             shape = RoundedCornerShape(16.dp),
             tonalElevation = 4.dp,
             modifier = Modifier.fillMaxWidth(),
         ) {
-            Text(
-                current.content,
-                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
-                modifier = Modifier.padding(32.dp),
-            )
+            Column(modifier = Modifier.padding(24.dp)) {
+                Text(
+                    current.content,
+                    style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.SemiBold),
+                )
+                current.durationSeconds?.let { secs ->
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Target: ${formatDuration(secs)}",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f),
+                    )
+                }
+            }
         }
-        Spacer(Modifier.height(32.dp))
+        Spacer(Modifier.height(24.dp))
+
+        StepTimer(step = current)
+
+        Spacer(Modifier.height(24.dp))
         Button(
             onClick = onMarkDone,
             enabled = !checked,
@@ -185,19 +208,92 @@ private fun FocusModeView(
         ) {
             Text(if (checked) "Step done ✓" else "Done with step")
         }
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(16.dp))
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
-            TextButton(
-                onClick = onPrev,
-                enabled = state.currentFocusIndex > 0,
-            ) { Text("← Previous") }
-            TextButton(
-                onClick = onNext,
-                enabled = state.currentFocusIndex < totalSteps - 1,
-            ) { Text("Next →") }
+            TextButton(onClick = onPrev, enabled = state.currentFocusIndex > 0) {
+                Text("← Previous")
+            }
+            TextButton(onClick = onNext, enabled = state.currentFocusIndex < totalSteps - 1) {
+                Text("Next →")
+            }
         }
     }
+}
+
+@Composable
+private fun StepTimer(step: StepEntity) {
+    val target = step.durationSeconds
+    var running by remember(step.id) { mutableStateOf(false) }
+    var elapsedMs by remember(step.id) { mutableStateOf(0L) }
+    val targetMs = target?.let { it * 1000L }
+
+    LaunchedEffect(running, step.id) {
+        if (!running) return@LaunchedEffect
+        val startedAt = System.currentTimeMillis() - elapsedMs
+        while (running) {
+            delay(100)
+            elapsedMs = System.currentTimeMillis() - startedAt
+        }
+    }
+
+    val remainingMs = targetMs?.let { (it - elapsedMs).coerceAtLeast(0L) }
+    val overran = targetMs != null && elapsedMs > targetMs
+
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(12.dp),
+        color = when {
+            !running && elapsedMs == 0L -> MaterialTheme.colorScheme.surfaceVariant
+            overran -> Color(0xFFFFE2C7)
+            else -> Color(0xFFE3F2D5)
+        },
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            val display = when {
+                running && remainingMs != null && !overran -> formatMs(remainingMs)
+                running && overran && targetMs != null -> "+${formatMs(elapsedMs - targetMs)}"
+                running -> formatMs(elapsedMs)
+                target == null -> "No target — just press start"
+                else -> "Target: ${formatDuration(target)}"
+            }
+            Text(
+                display,
+                style = MaterialTheme.typography.headlineLarge.copy(fontWeight = FontWeight.Bold),
+            )
+            Spacer(Modifier.height(8.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                Button(onClick = { running = !running }) {
+                    Text(if (running) "Pause" else if (elapsedMs > 0L) "Resume" else "Start")
+                }
+                if (elapsedMs > 0L) {
+                    OutlinedButton(onClick = { running = false; elapsedMs = 0L }) {
+                        Text("Reset")
+                    }
+                }
+            }
+        }
+    }
+}
+
+private fun formatDuration(seconds: Int): String = when {
+    seconds < 60 -> "≈ ${seconds}s"
+    seconds < 3600 -> {
+        val m = seconds / 60
+        val s = seconds % 60
+        if (s == 0) "≈ ${m} min" else "≈ ${m} min ${s}s"
+    }
+    else -> "≈ ${seconds / 3600}h ${seconds % 3600 / 60}m"
+}
+
+private fun formatMs(ms: Long): String {
+    val totalSecs = ms / 1000
+    val m = totalSecs / 60
+    val s = totalSecs % 60
+    return "%d:%02d".format(m, s)
 }

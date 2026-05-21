@@ -61,8 +61,13 @@ object TaskSeeder {
             val stepEntities = mutableListOf<StepEntity>()
             seedTasks.forEachIndexed { i, seed ->
                 val taskId = insertedIds[i]
-                SeedSteps.forTitle(seed.title).forEachIndexed { order, content ->
-                    stepEntities += StepEntity(taskId = taskId, order = order, content = content)
+                SeedSteps.forTitle(seed.title).forEachIndexed { order, def ->
+                    stepEntities += StepEntity(
+                        taskId = taskId,
+                        order = order,
+                        content = def.content,
+                        durationSeconds = def.durationSeconds,
+                    )
                 }
             }
             if (stepEntities.isNotEmpty()) stepDao.insertAll(stepEntities)
@@ -76,11 +81,26 @@ object TaskSeeder {
         val toInsert = mutableListOf<StepEntity>()
         tasks.forEach { task ->
             val existing = stepDao.forTask(task.id)
-            if (existing.isNotEmpty()) return@forEach
             val seed = SeedSteps.forTitle(task.title)
             if (seed.isEmpty()) return@forEach
-            seed.forEachIndexed { i, content ->
-                toInsert += StepEntity(taskId = task.id, order = i, content = content)
+            if (existing.isEmpty()) {
+                seed.forEachIndexed { i, def ->
+                    toInsert += StepEntity(
+                        taskId = task.id,
+                        order = i,
+                        content = def.content,
+                        durationSeconds = def.durationSeconds,
+                    )
+                }
+            } else if (existing.any { it.durationSeconds == null }) {
+                // Backfill durations onto existing rows by matching order+content
+                existing.forEach { row ->
+                    if (row.durationSeconds != null) return@forEach
+                    val match = seed.getOrNull(row.order)
+                    if (match != null && match.content == row.content && match.durationSeconds != null) {
+                        stepDao.updateDuration(row.id, match.durationSeconds)
+                    }
+                }
             }
         }
         if (toInsert.isNotEmpty()) stepDao.insertAll(toInsert)

@@ -5,6 +5,8 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import com.cpotzy.thedecider.data.db.dao.CompletionDao
 import com.cpotzy.thedecider.data.db.dao.SnoozeDao
 import com.cpotzy.thedecider.data.db.dao.StepDao
@@ -16,7 +18,7 @@ import com.cpotzy.thedecider.data.db.entities.TaskEntity
 
 @Database(
     entities = [TaskEntity::class, StepEntity::class, CompletionEntity::class, SnoozeEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = true,
 )
 @TypeConverters(Converters::class)
@@ -27,7 +29,15 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun snoozeDao(): SnoozeDao
 
     companion object {
+        val MIGRATION_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE steps ADD COLUMN durationSeconds INTEGER")
+            }
+        }
+
         fun build(context: Context): AppDatabase =
-            Room.databaseBuilder(context, AppDatabase::class.java, "thedecider.db").build()
+            Room.databaseBuilder(context, AppDatabase::class.java, "thedecider.db")
+                .addMigrations(MIGRATION_1_2)
+                .build()
     }
 }
