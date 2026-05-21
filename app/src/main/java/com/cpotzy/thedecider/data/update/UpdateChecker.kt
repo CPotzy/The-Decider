@@ -17,13 +17,18 @@ class UpdateChecker(
     private val owner: String,
     private val repo: String,
     private val currentSha: String,
+    private val token: String = "",
 ) {
     suspend fun checkForUpdate(): UpdateInfo? = withContext(Dispatchers.IO) {
         val url = URL("https://api.github.com/repos/$owner/$repo/releases/latest")
         val conn = (url.openConnection() as HttpURLConnection).apply {
             requestMethod = "GET"
             setRequestProperty("Accept", "application/vnd.github+json")
+            setRequestProperty("X-GitHub-Api-Version", "2022-11-28")
             setRequestProperty("User-Agent", "the-decider-app")
+            if (token.isNotBlank()) {
+                setRequestProperty("Authorization", "Bearer $token")
+            }
             connectTimeout = 5_000
             readTimeout = 5_000
         }

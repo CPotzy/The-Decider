@@ -48,5 +48,6 @@ class AppGraph(app: Application) {
         owner = BuildConfig.GITHUB_OWNER,
         repo = BuildConfig.GITHUB_REPO,
         currentSha = BuildConfig.GIT_SHA,
+        token = BuildConfig.UPDATE_TOKEN,
     )
 }

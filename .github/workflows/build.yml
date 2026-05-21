@@ -23,6 +23,8 @@ jobs:
         uses: gradle/actions/setup-gradle@v3
 
       - name: Build debug APK
+        env:
+          UPDATE_TOKEN: ${{ secrets.UPDATE_TOKEN }}
         run: ./gradlew :app:assembleDebug
 
       - name: Upload APK as artifact

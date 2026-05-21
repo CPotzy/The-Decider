@@ -5,6 +5,8 @@ plugins {
     alias(libs.plugins.ksp)
 }
 
+import java.util.Properties
+
 fun gitSha(): String {
     System.getenv("GITHUB_SHA")?.let { if (it.isNotBlank()) return it }
     return try {
@@ -16,6 +18,16 @@ fun gitSha(): String {
     } catch (e: Exception) {
         "unknown"
     }
+}
+
+fun updateToken(): String {
+    val localProps = rootProject.file("local.properties")
+    if (localProps.exists()) {
+        val props = Properties().apply { localProps.inputStream().use { load(it) } }
+        props.getProperty("gha.token")?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+    }
+    System.getenv("UPDATE_TOKEN")?.trim()?.takeIf { it.isNotBlank() }?.let { return it }
+    return ""
 }
 
 android {
@@ -32,6 +44,7 @@ android {
         buildConfigField("String", "GIT_SHA", "\"${gitSha()}\"")
         buildConfigField("String", "GITHUB_OWNER", "\"CPotzy\"")
         buildConfigField("String", "GITHUB_REPO", "\"The-Decider\"")
+        buildConfigField("String", "UPDATE_TOKEN", "\"${updateToken()}\"")
     }
 
     signingConfigs {
