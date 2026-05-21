@@ -35,6 +35,7 @@ fun QueueScreen(
     viewModel: QueueViewModel,
     onAcceptTask: (Long) -> Unit,
     onOpenHistory: () -> Unit,
+    onOpenTasks: () -> Unit,
     taskRepository: TaskRepository,
     now: Instant = Instant.now(),
 ) {
@@ -57,6 +58,7 @@ fun QueueScreen(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.End,
         ) {
+            TextButton(onClick = onOpenTasks) { Text("Tasks") }
             TextButton(onClick = onOpenHistory) { Text("History") }
         }
         val update = state.update

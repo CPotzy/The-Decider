@@ -40,6 +40,8 @@ class TaskRepository(
 
     suspend fun setActive(id: Long, isActive: Boolean) = taskDao.setActive(id, isActive)
 
+    suspend fun delete(id: Long) = taskDao.delete(id)
+
     suspend fun listAllRaw(): List<TaskEntity> = taskDao.listAll()
 
     suspend fun createCustomTask(
