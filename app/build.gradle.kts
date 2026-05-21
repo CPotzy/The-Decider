@@ -99,6 +99,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.coroutines.core)
     implementation(libs.coroutines.android)
+    implementation(libs.work.runtime.ktx)
 
     debugImplementation(libs.compose.ui.tooling)
 

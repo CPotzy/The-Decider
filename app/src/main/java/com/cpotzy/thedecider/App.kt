@@ -8,6 +8,8 @@ import com.cpotzy.thedecider.data.repo.StepRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.data.seed.TaskSeeder
 import com.cpotzy.thedecider.data.update.UpdateChecker
+import com.cpotzy.thedecider.work.NudgeWorker
+import com.cpotzy.thedecider.work.Notifications
 import com.cpotzy.thedecider.domain.select.ContextFilter
 import com.cpotzy.thedecider.domain.select.PressureCalculator
 import com.cpotzy.thedecider.domain.select.SelectionService
@@ -27,6 +29,8 @@ class App : Application() {
         graph.scope.launch {
             TaskSeeder.seedIfEmpty(this@App, graph.taskRepository, graph.stepDaoForSeeding, graph.clock)
         }
+        Notifications.ensureChannel(this)
+        NudgeWorker.schedule(this)
     }
 }
 
