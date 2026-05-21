@@ -29,7 +29,7 @@ class AppGraph(app: Application) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val clock: Clock = Clock.System
     private val db = AppDatabase.build(app)
-    val taskRepository = TaskRepository(db.taskDao(), db.completionDao())
+    val taskRepository = TaskRepository(db.taskDao(), db.completionDao(), clock)
     val completionRepository = CompletionRepository(db.completionDao(), db.taskDao(), clock)
     val snoozeRepository = SnoozeRepository(db.snoozeDao(), clock)
 }
