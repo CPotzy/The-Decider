@@ -6,6 +6,9 @@ import com.cpotzy.thedecider.data.repo.CompletionRepository
 import com.cpotzy.thedecider.data.repo.SnoozeRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.data.seed.TaskSeeder
+import com.cpotzy.thedecider.domain.select.ContextFilter
+import com.cpotzy.thedecider.domain.select.PressureCalculator
+import com.cpotzy.thedecider.domain.select.SelectionService
 import com.cpotzy.thedecider.domain.time.Clock
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -32,4 +35,8 @@ class AppGraph(app: Application) {
     val taskRepository = TaskRepository(db.taskDao(), db.completionDao(), clock)
     val completionRepository = CompletionRepository(db.completionDao(), db.taskDao(), clock)
     val snoozeRepository = SnoozeRepository(db.snoozeDao(), clock)
+
+    val pressureCalculator = PressureCalculator()
+    val contextFilter = ContextFilter()
+    val selectionService = SelectionService(pressureCalculator, contextFilter)
 }
