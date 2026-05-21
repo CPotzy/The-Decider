@@ -23,6 +23,7 @@ object SeedSteps {
             StepDef("Empty the vacuum if full", 60),
             StepDef("Vacuum upstairs floors", 240),
             StepDef("Put the vacuum away", 30),
+            StepDef("Plug the vacuum in to charge", 20),
         ),
         "Dishes (muci & suci)" to listOf(
             StepDef("Collect all dirty dishes from around the house", 180),

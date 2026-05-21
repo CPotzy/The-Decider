@@ -45,13 +45,16 @@ fun TaskDetailScreen(
             )
         },
         bottomBar = {
+            val allChecked = state.steps.isEmpty() ||
+                state.steps.all { it.id in state.checkedStepIds }
             BottomAppBar {
                 Spacer(Modifier.weight(1f))
                 Button(
                     onClick = { viewModel.finishTask() },
+                    enabled = allChecked,
                     modifier = Modifier.padding(end = 16.dp),
                 ) {
-                    Text("Done with task")
+                    Text(if (allChecked) "Done with task" else "Check off all steps first")
                 }
             }
         },
