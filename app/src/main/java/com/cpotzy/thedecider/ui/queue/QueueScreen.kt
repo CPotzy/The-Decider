@@ -34,6 +34,7 @@ import java.time.Instant
 fun QueueScreen(
     viewModel: QueueViewModel,
     onAcceptTask: (Long) -> Unit,
+    onOpenHistory: () -> Unit,
     taskRepository: TaskRepository,
     now: Instant = Instant.now(),
 ) {
@@ -52,6 +53,12 @@ fun QueueScreen(
 
     Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp)) {
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onOpenHistory) { Text("History") }
+        }
         val update = state.update
         if (update != null && !state.updateDismissed) {
             UpdateBanner(

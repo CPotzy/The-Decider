@@ -17,6 +17,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.cpotzy.thedecider.ui.history.HistoryScreen
 import com.cpotzy.thedecider.ui.queue.QueueScreen
 import com.cpotzy.thedecider.ui.queue.QueueViewModel
 import com.cpotzy.thedecider.ui.task.TaskDetailScreen
@@ -63,7 +64,14 @@ private fun AppNav(graph: AppGraph) {
             QueueScreen(
                 viewModel = vm,
                 onAcceptTask = { taskId -> navController.navigate("task/$taskId") },
+                onOpenHistory = { navController.navigate("history") },
                 taskRepository = graph.taskRepository,
+            )
+        }
+        composable("history") {
+            HistoryScreen(
+                completionDao = graph.completionDao,
+                onBack = { navController.popBackStack() },
             )
         }
         composable(
