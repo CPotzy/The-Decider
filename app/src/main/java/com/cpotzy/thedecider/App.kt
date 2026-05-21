@@ -4,6 +4,7 @@ import android.app.Application
 import com.cpotzy.thedecider.data.db.AppDatabase
 import com.cpotzy.thedecider.data.repo.CompletionRepository
 import com.cpotzy.thedecider.data.repo.SnoozeRepository
+import com.cpotzy.thedecider.data.repo.StepRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.data.seed.TaskSeeder
 import com.cpotzy.thedecider.data.update.UpdateChecker
@@ -24,7 +25,7 @@ class App : Application() {
         super.onCreate()
         graph = AppGraph(this)
         graph.scope.launch {
-            TaskSeeder.seedIfEmpty(this@App, graph.taskRepository, graph.clock)
+            TaskSeeder.seedIfEmpty(this@App, graph.taskRepository, graph.stepDaoForSeeding, graph.clock)
         }
     }
 }
@@ -36,6 +37,8 @@ class AppGraph(app: Application) {
     val taskRepository = TaskRepository(db.taskDao(), db.completionDao(), clock)
     val completionRepository = CompletionRepository(db.completionDao(), db.taskDao(), clock)
     val snoozeRepository = SnoozeRepository(db.snoozeDao(), clock)
+    val stepRepository = StepRepository(db.stepDao(), db.taskDao())
+    val stepDaoForSeeding = db.stepDao()
 
     val pressureCalculator = PressureCalculator()
     val contextFilter = ContextFilter()

@@ -1,6 +1,8 @@
 package com.cpotzy.thedecider.data.seed
 
 import android.content.Context
+import com.cpotzy.thedecider.data.db.dao.StepDao
+import com.cpotzy.thedecider.data.db.entities.StepEntity
 import com.cpotzy.thedecider.data.db.entities.TaskEntity
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.domain.model.Cadence
@@ -39,7 +41,7 @@ object TaskSeeder {
         return tasks
     }
 
-    suspend fun seedIfEmpty(context: Context, repo: TaskRepository, clock: Clock) {
+    suspend fun seedIfEmpty(context: Context, repo: TaskRepository, stepDao: StepDao, clock: Clock) {
         if (repo.count() > 0) return
         val text = context.assets.open("tasks-list.md").bufferedReader().use(BufferedReader::readText)
         val seedTasks = parseMarkdown(text)
@@ -54,7 +56,16 @@ object TaskSeeder {
                 createdAt = now,
             )
         }
-        repo.insertAll(entities)
+        val insertedIds = repo.insertAll(entities)
+
+        val stepEntities = mutableListOf<StepEntity>()
+        seedTasks.forEachIndexed { i, seed ->
+            val taskId = insertedIds[i]
+            SeedSteps.forTitle(seed.title).forEachIndexed { order, content ->
+                stepEntities += StepEntity(taskId = taskId, order = order, content = content)
+            }
+        }
+        if (stepEntities.isNotEmpty()) stepDao.insertAll(stepEntities)
     }
 
     private fun defaultEnergy(title: String): Energy = when {

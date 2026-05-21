@@ -29,6 +29,7 @@ import java.time.Instant
 @Composable
 fun QueueScreen(
     viewModel: QueueViewModel,
+    onAcceptTask: (Long) -> Unit,
     now: Instant = Instant.now(),
 ) {
     val state by viewModel.state.collectAsState()
@@ -40,6 +41,8 @@ fun QueueScreen(
 
     val dragState = rememberDraggableState { delta -> offsetX += delta }
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) { viewModel.onResume() }
 
     Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp)) {
         val update = state.update
@@ -71,7 +74,7 @@ fun QueueScreen(
                     onDragStopped = {
                         when {
                             offsetX > swipeThresholdPx -> {
-                                viewModel.acceptCurrent()
+                                viewModel.currentTaskId()?.let { onAcceptTask(it) }
                                 offsetX = 0f
                             }
                             offsetX < -swipeThresholdPx -> {
@@ -126,10 +129,10 @@ fun QueueScreen(
                 Text("← later", style = MaterialTheme.typography.titleLarge)
             }
             TextButton(
-                onClick = { viewModel.acceptCurrent() },
+                onClick = { viewModel.currentTaskId()?.let { onAcceptTask(it) } },
                 enabled = state.task != null,
             ) {
-                Text("done →", style = MaterialTheme.typography.titleLarge)
+                Text("start →", style = MaterialTheme.typography.titleLarge)
             }
         }
         Spacer(Modifier.height(16.dp))

@@ -49,6 +49,8 @@ class QueueViewModel(
         checkForUpdate()
     }
 
+    fun onResume() = refresh()
+
     fun dismissUpdateBanner() {
         _state.value = _state.value.copy(updateDismissed = true)
     }
@@ -65,13 +67,7 @@ class QueueViewModel(
         refresh()
     }
 
-    fun acceptCurrent() {
-        val current = _state.value.task ?: return
-        viewModelScope.launch {
-            completionRepository.markDone(current.id)
-            refresh()
-        }
-    }
+    fun currentTaskId(): Long? = _state.value.task?.id
 
     fun snoozeCurrent(kind: SnoozeKindChoice) {
         val current = _state.value.task ?: return
