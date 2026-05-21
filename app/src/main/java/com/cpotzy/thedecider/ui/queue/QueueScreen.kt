@@ -69,10 +69,22 @@ fun QueueScreen(
                     TaskCard(task = task, tier = state.tier, now = now)
                 }
             } else if (state.emptyState) {
-                Text(
-                    "Nothing to decide right now.",
-                    style = MaterialTheme.typography.titleLarge,
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                    modifier = Modifier.padding(32.dp),
+                ) {
+                    Text(
+                        "Nothing to decide right now.",
+                        style = MaterialTheme.typography.headlineLarge,
+                    )
+                    Spacer(Modifier.height(12.dp))
+                    Text(
+                        "Come back later, or try a different filter above.",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                    )
+                }
             }
         }
         Spacer(Modifier.height(24.dp))
