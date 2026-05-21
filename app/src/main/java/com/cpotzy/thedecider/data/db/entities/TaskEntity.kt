@@ -18,4 +18,5 @@ data class TaskEntity(
     val timeWindow: TimeWindow,
     val isActive: Boolean = true,
     val createdAt: Instant,
+    val isUserCreated: Boolean = false,
 )

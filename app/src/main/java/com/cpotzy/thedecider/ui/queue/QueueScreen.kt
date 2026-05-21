@@ -8,6 +8,8 @@ import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -21,6 +23,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.cpotzy.thedecider.data.repo.TaskRepository
+import com.cpotzy.thedecider.ui.quickadd.QuickAddSheet
 import com.cpotzy.thedecider.ui.queue.components.ModeChipRow
 import com.cpotzy.thedecider.ui.queue.components.SwipeChooserSheet
 import com.cpotzy.thedecider.ui.queue.components.TaskCard
@@ -30,11 +34,13 @@ import java.time.Instant
 fun QueueScreen(
     viewModel: QueueViewModel,
     onAcceptTask: (Long) -> Unit,
+    taskRepository: TaskRepository,
     now: Instant = Instant.now(),
 ) {
     val state by viewModel.state.collectAsState()
     var offsetX by remember { mutableStateOf(0f) }
     var showChooser by remember { mutableStateOf(false) }
+    var showQuickAdd by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val swipeThresholdPx = with(density) { 120.dp.toPx() }
     val animatedOffset by animateFloatAsState(targetValue = offsetX, label = "swipeOffset")
@@ -44,6 +50,7 @@ fun QueueScreen(
 
     LaunchedEffect(Unit) { viewModel.onResume() }
 
+    Box(modifier = Modifier.fillMaxSize()) {
     Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp)) {
         val update = state.update
         if (update != null && !state.updateDismissed) {
@@ -137,6 +144,15 @@ fun QueueScreen(
         }
         Spacer(Modifier.height(16.dp))
     }
+        FloatingActionButton(
+            onClick = { showQuickAdd = true },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(end = 16.dp, bottom = 96.dp),
+        ) {
+            Text("+", style = MaterialTheme.typography.headlineLarge)
+        }
+    }
     if (showChooser) {
         SwipeChooserSheet(
             onChoose = { kind ->
@@ -144,6 +160,16 @@ fun QueueScreen(
                 showChooser = false
             },
             onDismiss = { showChooser = false },
+        )
+    }
+    if (showQuickAdd) {
+        QuickAddSheet(
+            taskRepository = taskRepository,
+            onAdded = {
+                showQuickAdd = false
+                viewModel.onResume()
+            },
+            onDismiss = { showQuickAdd = false },
         )
     }
 }

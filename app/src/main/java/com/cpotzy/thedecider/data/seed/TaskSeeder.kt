@@ -86,13 +86,16 @@ object TaskSeeder {
 
         // Reactivate tasks that exist in markdown and are currently inactive
         allInDb.forEach { row ->
+            if (row.isUserCreated) return@forEach
             if (row.title in seedByTitle.keys && !row.isActive) {
                 repo.setActive(row.id, true)
             }
         }
 
-        // Deactivate tasks that are no longer in markdown (preserves history)
+        // Deactivate seed-managed tasks that are no longer in markdown
+        // (user-created tasks live outside this reconciliation loop)
         allInDb.forEach { row ->
+            if (row.isUserCreated) return@forEach
             if (row.title !in seedByTitle.keys && row.isActive) {
                 repo.setActive(row.id, false)
             }

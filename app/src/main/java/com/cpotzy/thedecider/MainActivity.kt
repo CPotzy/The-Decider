@@ -63,6 +63,7 @@ private fun AppNav(graph: AppGraph) {
             QueueScreen(
                 viewModel = vm,
                 onAcceptTask = { taskId -> navController.navigate("task/$taskId") },
+                taskRepository = graph.taskRepository,
             )
         }
         composable(
