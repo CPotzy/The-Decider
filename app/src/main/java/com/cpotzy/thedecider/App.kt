@@ -1,6 +1,16 @@
 package com.cpotzy.thedecider
 
 import android.app.Application
+import com.cpotzy.thedecider.data.db.AppDatabase
+import com.cpotzy.thedecider.data.repo.CompletionRepository
+import com.cpotzy.thedecider.data.repo.SnoozeRepository
+import com.cpotzy.thedecider.data.repo.TaskRepository
+import com.cpotzy.thedecider.data.seed.TaskSeeder
+import com.cpotzy.thedecider.domain.time.Clock
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class App : Application() {
     lateinit var graph: AppGraph
@@ -9,9 +19,17 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         graph = AppGraph(this)
+        graph.scope.launch {
+            TaskSeeder.seedIfEmpty(this@App, graph.taskRepository, graph.clock)
+        }
     }
 }
 
-class AppGraph(private val app: Application) {
-    // Empty for now — entries added in later tasks
+class AppGraph(app: Application) {
+    val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+    val clock: Clock = Clock.System
+    private val db = AppDatabase.build(app)
+    val taskRepository = TaskRepository(db.taskDao(), db.completionDao())
+    val completionRepository = CompletionRepository(db.completionDao(), db.taskDao(), clock)
+    val snoozeRepository = SnoozeRepository(db.snoozeDao(), clock)
 }
