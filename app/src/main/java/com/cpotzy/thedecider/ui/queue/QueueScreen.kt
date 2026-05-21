@@ -1,15 +1,17 @@
 package com.cpotzy.thedecider.ui.queue
 
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.foundation.gestures.detectHorizontalDragGestures
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.draggable
+import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import com.cpotzy.thedecider.ui.queue.components.ModeChipRow
@@ -29,6 +31,8 @@ fun QueueScreen(
     val swipeThresholdPx = with(density) { 120.dp.toPx() }
     val animatedOffset by animateFloatAsState(targetValue = offsetX, label = "swipeOffset")
 
+    val dragState = rememberDraggableState { delta -> offsetX += delta }
+
     Column(modifier = Modifier.fillMaxSize().padding(top = 32.dp)) {
         ModeChipRow(
             chips = state.modeChips,
@@ -39,32 +43,34 @@ fun QueueScreen(
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .weight(1f),
+                .weight(1f)
+                .draggable(
+                    state = dragState,
+                    orientation = Orientation.Horizontal,
+                    onDragStopped = {
+                        when {
+                            offsetX > swipeThresholdPx -> {
+                                viewModel.acceptCurrent()
+                                offsetX = 0f
+                            }
+                            offsetX < -swipeThresholdPx -> {
+                                showChooser = true
+                                offsetX = 0f
+                            }
+                            else -> offsetX = 0f
+                        }
+                    },
+                ),
             contentAlignment = Alignment.Center,
         ) {
             val task = state.task
             if (task != null) {
                 Box(
                     modifier = Modifier
-                        .graphicsLayer(translationX = animatedOffset, rotationZ = animatedOffset / 60f)
-                        .pointerInput(task.id) {
-                            detectHorizontalDragGestures(
-                                onDragEnd = {
-                                    when {
-                                        offsetX > swipeThresholdPx -> {
-                                            viewModel.acceptCurrent()
-                                            offsetX = 0f
-                                        }
-                                        offsetX < -swipeThresholdPx -> {
-                                            showChooser = true
-                                            offsetX = 0f
-                                        }
-                                        else -> offsetX = 0f
-                                    }
-                                },
-                                onDragCancel = { offsetX = 0f },
-                            ) { _, dragAmount -> offsetX += dragAmount }
-                        },
+                        .graphicsLayer(
+                            translationX = animatedOffset,
+                            rotationZ = animatedOffset / 60f,
+                        ),
                 ) {
                     TaskCard(task = task, tier = state.tier, now = now)
                 }
@@ -87,9 +93,25 @@ fun QueueScreen(
                 }
             }
         }
-        Spacer(Modifier.height(24.dp))
-        SwipeHint()
-        Spacer(Modifier.height(24.dp))
+        Spacer(Modifier.height(8.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            TextButton(
+                onClick = { if (state.task != null) showChooser = true },
+                enabled = state.task != null,
+            ) {
+                Text("← later", style = MaterialTheme.typography.titleLarge)
+            }
+            TextButton(
+                onClick = { viewModel.acceptCurrent() },
+                enabled = state.task != null,
+            ) {
+                Text("done →", style = MaterialTheme.typography.titleLarge)
+            }
+        }
+        Spacer(Modifier.height(16.dp))
     }
     if (showChooser) {
         SwipeChooserSheet(
@@ -99,16 +121,5 @@ fun QueueScreen(
             },
             onDismiss = { showChooser = false },
         )
-    }
-}
-
-@Composable
-private fun SwipeHint() {
-    Row(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 32.dp),
-        horizontalArrangement = Arrangement.SpaceBetween,
-    ) {
-        Text("← later", style = MaterialTheme.typography.labelSmall)
-        Text("done →", style = MaterialTheme.typography.labelSmall)
     }
 }
