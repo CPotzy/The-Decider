@@ -44,6 +44,7 @@ All registered tasks grouped by recurrence.
 - Dust bedroom
 - Face mask
 - Vacuum under bed
+- Mop the floor
 
 ## Biweekly (every 2 weeks)
 - Clean fridge

@@ -17,13 +17,16 @@ object SeedSteps {
     val byTitle: Map<String, List<StepDef>> = mapOf(
         // Daily
         "Vacuum downstairs and upstairs" to listOf(
+            StepDef("Clear the floor (buckets, chairs, rubbish bin, coffee table)", 180),
             StepDef("Get the vacuum out", 30),
             StepDef("Vacuum downstairs floors", 240),
+            StepDef("Vacuum the stairs", 180),
             StepDef("Empty the vacuum if full", 60),
             StepDef("Vacuum upstairs floors", 240),
             StepDef("Put the vacuum away", 30),
         ),
         "Dishes (muci & suci)" to listOf(
+            StepDef("Collect all dirty dishes from around the house", 180),
             StepDef("Scrape food into compost", 60),
             StepDef("Soap and sponge muci (impure)", 180),
             StepDef("Rinse muci", 60),
@@ -166,6 +169,13 @@ object SeedSteps {
             StepDef("Pull the bed forward a little", 60),
             StepDef("Vacuum the area", 180),
             StepDef("Push the bed back", 60),
+        ),
+        "Mop the floor" to listOf(
+            StepDef("Fill the bucket with warm water + mop solution", 120),
+            StepDef("Mop the downstairs floor", 360),
+            StepDef("Rinse the mop", 60),
+            StepDef("Mop the upstairs floor", 240),
+            StepDef("Empty the bucket and put it away", 60),
         ),
 
         // Biweekly

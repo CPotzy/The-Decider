@@ -14,4 +14,7 @@ interface StepDao {
 
     @Query("UPDATE steps SET durationSeconds = :durationSeconds WHERE id = :id")
     suspend fun updateDuration(id: Long, durationSeconds: Int?)
+
+    @Query("DELETE FROM steps WHERE taskId = :taskId")
+    suspend fun deleteByTask(taskId: Long)
 }

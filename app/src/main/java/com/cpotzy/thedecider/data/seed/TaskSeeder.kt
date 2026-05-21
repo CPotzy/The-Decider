@@ -42,10 +42,11 @@ object TaskSeeder {
     }
 
     suspend fun seedIfEmpty(context: Context, repo: TaskRepository, stepDao: StepDao, clock: Clock) {
+        val text = context.assets.open("tasks-list.md").bufferedReader().use(BufferedReader::readText)
+        val seedTasks = parseMarkdown(text)
+        val now = clock.now()
+
         if (repo.count() == 0) {
-            val text = context.assets.open("tasks-list.md").bufferedReader().use(BufferedReader::readText)
-            val seedTasks = parseMarkdown(text)
-            val now = clock.now()
             val entities = seedTasks.map { seed ->
                 TaskEntity(
                     title = seed.title,
@@ -56,54 +57,49 @@ object TaskSeeder {
                     createdAt = now,
                 )
             }
-            val insertedIds = repo.insertAll(entities)
-
-            val stepEntities = mutableListOf<StepEntity>()
-            seedTasks.forEachIndexed { i, seed ->
-                val taskId = insertedIds[i]
-                SeedSteps.forTitle(seed.title).forEachIndexed { order, def ->
-                    stepEntities += StepEntity(
-                        taskId = taskId,
-                        order = order,
-                        content = def.content,
-                        durationSeconds = def.durationSeconds,
-                    )
-                }
-            }
-            if (stepEntities.isNotEmpty()) stepDao.insertAll(stepEntities)
+            repo.insertAll(entities)
         } else {
-            backfillMissingSteps(repo, stepDao)
+            // Existing install: add any tasks that exist in markdown but not yet in DB
+            val existingTitles = repo.listActiveWithLastDone().map { it.title }.toSet()
+            val newSeeds = seedTasks.filter { it.title !in existingTitles }
+            if (newSeeds.isNotEmpty()) {
+                repo.insertAll(newSeeds.map { seed ->
+                    TaskEntity(
+                        title = seed.title,
+                        cadence = seed.cadence,
+                        energy = defaultEnergy(seed.title),
+                        duration = defaultDuration(seed.title),
+                        timeWindow = defaultTimeWindow(seed.title),
+                        createdAt = now,
+                    )
+                })
+            }
         }
+        reconcileSteps(repo, stepDao)
     }
 
-    private suspend fun backfillMissingSteps(repo: TaskRepository, stepDao: StepDao) {
+    private suspend fun reconcileSteps(repo: TaskRepository, stepDao: StepDao) {
         val tasks = repo.listActiveWithLastDone()
-        val toInsert = mutableListOf<StepEntity>()
         tasks.forEach { task ->
-            val existing = stepDao.forTask(task.id)
             val seed = SeedSteps.forTitle(task.title)
             if (seed.isEmpty()) return@forEach
-            if (existing.isEmpty()) {
-                seed.forEachIndexed { i, def ->
-                    toInsert += StepEntity(
-                        taskId = task.id,
-                        order = i,
-                        content = def.content,
-                        durationSeconds = def.durationSeconds,
-                    )
-                }
-            } else if (existing.any { it.durationSeconds == null }) {
-                // Backfill durations onto existing rows by matching order+content
-                existing.forEach { row ->
-                    if (row.durationSeconds != null) return@forEach
-                    val match = seed.getOrNull(row.order)
-                    if (match != null && match.content == row.content && match.durationSeconds != null) {
-                        stepDao.updateDuration(row.id, match.durationSeconds)
-                    }
-                }
+            val existing = stepDao.forTask(task.id)
+            val matches = existing.size == seed.size && existing.zip(seed).all { (row, def) ->
+                row.content == def.content &&
+                    row.durationSeconds == def.durationSeconds
             }
+            if (matches) return@forEach
+            stepDao.deleteByTask(task.id)
+            val rows = seed.mapIndexed { i, def ->
+                StepEntity(
+                    taskId = task.id,
+                    order = i,
+                    content = def.content,
+                    durationSeconds = def.durationSeconds,
+                )
+            }
+            stepDao.insertAll(rows)
         }
-        if (toInsert.isNotEmpty()) stepDao.insertAll(toInsert)
     }
 
     private fun defaultEnergy(title: String): Energy = when {
