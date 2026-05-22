@@ -6,6 +6,10 @@ import java.time.LocalTime
 
 class ContextFilter {
     fun matches(task: Task, currentTime: LocalTime, mode: ModeChip): Boolean {
+        // Company mode bypasses time-window and energy/duration filters — we want
+        // every visible-surface task on the table, no matter what time it is or
+        // how much energy you've got. The quickTidy filter is applied upstream.
+        if (mode.companyComing) return true
         if (!matchesTimeWindow(task, currentTime)) return false
         if (mode.energyFilter != null && task.energy != mode.energyFilter) return false
         if (mode.maxDuration != null && task.duration.maxMinutes > mode.maxDuration.maxMinutes) return false

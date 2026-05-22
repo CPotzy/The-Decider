@@ -104,6 +104,10 @@ fun QueueScreen(
                 selected = state.mode,
                 onSelect = { viewModel.setMode(it) },
             )
+            if (state.mode.companyComing) {
+                Spacer(Modifier.height(8.dp))
+                CompanyModeBanner()
+            }
             Spacer(Modifier.height(24.dp))
 
             Box(
@@ -370,6 +374,30 @@ private fun EmptyQueueState(onAdd: () -> Unit, onOpenTasks: () -> Unit) {
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             Button(onClick = onAdd) { Text("Add a task") }
             TextButton(onClick = onOpenTasks) { Text("Browse all") }
+        }
+    }
+}
+
+@Composable
+private fun CompanyModeBanner() {
+    Surface(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+        shape = RoundedCornerShape(12.dp),
+        color = MaterialTheme.colorScheme.errorContainer,
+    ) {
+        Column(modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp)) {
+            Text(
+                "Company mode",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                color = MaterialTheme.colorScheme.onErrorContainer,
+            )
+            Text(
+                "Cadence and snoozes ignored. Hit the visible surfaces.",
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onErrorContainer.copy(alpha = 0.85f),
+            )
         }
     }
 }

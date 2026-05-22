@@ -124,25 +124,30 @@ class QueueViewModel(
     private fun refresh() {
         viewModelScope.launch {
             val now = clock.now()
-            val snoozed = snoozeRepository.activeTaskIds(now)
-            val eligible = taskRepository.listEligibleForSelection(now)
+            val mode = _state.value.mode
+            val companyMode = mode.companyComing
+            val snoozed = if (companyMode) emptySet() else snoozeRepository.activeTaskIds(now)
+            val candidates = if (companyMode)
+                taskRepository.listActiveQuickTidy()
+            else
+                taskRepository.listEligibleForSelection(now)
             val doneToday = completionRepository.doneTodayCount(zone)
             var ahead = false
             var picked = selectionService.pickNext(
-                candidates = eligible,
+                candidates = candidates,
                 snoozedIds = snoozed,
                 now = now,
                 zone = zone,
-                mode = _state.value.mode,
+                mode = mode,
             )
-            if (picked == null) {
+            if (picked == null && !companyMode) {
                 ahead = true
                 picked = selectionService.pickNext(
                     candidates = taskRepository.listActiveWithLastDone(),
                     snoozedIds = snoozed,
                     now = now,
                     zone = zone,
-                    mode = _state.value.mode,
+                    mode = mode,
                 )
             }
             if (picked == null) {
