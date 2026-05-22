@@ -23,6 +23,7 @@ fun TaskDetailScreen(
     viewModel: TaskDetailViewModel,
     onBack: () -> Unit,
     onFinished: () -> Unit,
+    onEditSteps: (Long) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsState()
 
@@ -38,6 +39,12 @@ fun TaskDetailScreen(
                     TextButton(onClick = onBack) { Text("Back") }
                 },
                 actions = {
+                    val task = state.task
+                    if (task != null) {
+                        TextButton(onClick = { onEditSteps(task.id) }) {
+                            Text("Edit steps")
+                        }
+                    }
                     if (state.steps.isNotEmpty()) {
                         TextButton(onClick = { viewModel.toggleFocusMode() }) {
                             Text(if (state.focusMode) "List" else "Focus")

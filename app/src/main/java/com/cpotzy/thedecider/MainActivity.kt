@@ -26,6 +26,8 @@ import com.cpotzy.thedecider.ui.manage.TaskListScreen
 import com.cpotzy.thedecider.ui.queue.QueueScreen
 import com.cpotzy.thedecider.ui.queue.QueueViewModel
 import com.cpotzy.thedecider.ui.settings.SettingsScreen
+import com.cpotzy.thedecider.ui.task.StepEditorScreen
+import com.cpotzy.thedecider.ui.task.StepEditorViewModel
 import com.cpotzy.thedecider.ui.task.TaskDetailScreen
 import com.cpotzy.thedecider.ui.task.TaskDetailViewModel
 import com.cpotzy.thedecider.ui.theme.TheDeciderTheme
@@ -131,6 +133,31 @@ private fun AppNav(graph: AppGraph) {
                 viewModel = vm,
                 onBack = { navController.popBackStack() },
                 onFinished = { navController.popBackStack() },
+                onEditSteps = { id -> navController.navigate("step_editor/$id") },
+            )
+        }
+        composable(
+            route = "step_editor/{taskId}",
+            arguments = listOf(navArgument("taskId") { type = NavType.LongType }),
+        ) { entry ->
+            val taskId = entry.arguments?.getLong("taskId") ?: return@composable
+            val vm: StepEditorViewModel = viewModel(
+                key = "step-editor-$taskId",
+                factory = remember(taskId) {
+                    object : ViewModelProvider.Factory {
+                        override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                            @Suppress("UNCHECKED_CAST")
+                            return StepEditorViewModel(
+                                taskId = taskId,
+                                stepRepository = graph.stepRepository,
+                            ) as T
+                        }
+                    }
+                },
+            )
+            StepEditorScreen(
+                viewModel = vm,
+                onBack = { navController.popBackStack() },
             )
         }
     }
