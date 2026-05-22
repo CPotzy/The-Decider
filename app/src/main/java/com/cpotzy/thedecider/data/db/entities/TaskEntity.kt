@@ -20,4 +20,6 @@ data class TaskEntity(
     val createdAt: Instant,
     val isUserCreated: Boolean = false,
     val dependsOnTitles: List<String> = emptyList(),
+    val stepsEdited: Boolean = false,
+    val quickTidy: Boolean = false,
 )

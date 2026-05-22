@@ -56,6 +56,7 @@ object TaskSeeder {
                     timeWindow = defaultTimeWindow(seed.title),
                     createdAt = now,
                     dependsOnTitles = SeedDependencies.forTitle(seed.title),
+                    quickTidy = SeedQuickTidy.isQuickTidy(seed.title),
                 )
             }
             repo.insertAll(entities)
@@ -82,6 +83,7 @@ object TaskSeeder {
                     timeWindow = defaultTimeWindow(seed.title),
                     createdAt = now,
                     dependsOnTitles = SeedDependencies.forTitle(seed.title),
+                    quickTidy = SeedQuickTidy.isQuickTidy(seed.title),
                 )
             }
         if (toInsert.isNotEmpty()) repo.insertAll(toInsert)
@@ -92,6 +94,15 @@ object TaskSeeder {
             val expected = SeedDependencies.forTitle(row.title)
             if (row.dependsOnTitles != expected) {
                 repo.updateDependsOn(row.id, expected)
+            }
+        }
+
+        // Sync quickTidy flag on existing seed-managed tasks
+        allInDb.forEach { row ->
+            if (row.isUserCreated) return@forEach
+            val expected = SeedQuickTidy.isQuickTidy(row.title)
+            if (row.quickTidy != expected) {
+                repo.setQuickTidy(row.id, expected)
             }
         }
 
@@ -114,8 +125,12 @@ object TaskSeeder {
     }
 
     private suspend fun reconcileSteps(repo: TaskRepository, stepDao: StepDao) {
+        val rawRows = repo.listAllRaw().associateBy { it.id }
         val tasks = repo.listActiveWithLastDone()
         tasks.forEach { task ->
+            val raw = rawRows[task.id] ?: return@forEach
+            // Once the user has edited steps for this task, leave them alone.
+            if (raw.stepsEdited) return@forEach
             val seed = SeedSteps.forTitle(task.title)
             if (seed.isEmpty()) return@forEach
             val existing = stepDao.forTask(task.id)
@@ -139,12 +154,14 @@ object TaskSeeder {
 
     private fun defaultEnergy(title: String): Energy = when {
         title.contains("HIIT", ignoreCase = true) || title.contains("Weights", ignoreCase = true) -> Energy.HIGH
+        title.equals("Sort the doom pile", ignoreCase = true) -> Energy.MEDIUM
         title.contains("Mow", ignoreCase = true) || title.contains("Clean", ignoreCase = true) -> Energy.MEDIUM
         else -> Energy.LOW
     }
 
     private fun defaultDuration(title: String): Duration = when {
         title.contains("HIIT", ignoreCase = true) || title.contains("Clean bathroom", ignoreCase = true) -> Duration.MEDIUM
+        title.equals("Sort the doom pile", ignoreCase = true) -> Duration.MEDIUM
         title.contains("Brush", ignoreCase = true) || title.contains("Floss", ignoreCase = true) ||
             title.contains("Scrape", ignoreCase = true) || title.contains("skincare", ignoreCase = true) -> Duration.QUICK
         else -> Duration.SHORT

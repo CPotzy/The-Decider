@@ -22,6 +22,9 @@ interface TaskDao {
     @Query("SELECT * FROM tasks WHERE isActive = 1")
     suspend fun listActive(): List<TaskEntity>
 
+    @Query("SELECT * FROM tasks WHERE isActive = 1 AND quickTidy = 1")
+    suspend fun listActiveQuickTidy(): List<TaskEntity>
+
     @Query("SELECT * FROM tasks")
     suspend fun listAll(): List<TaskEntity>
 
@@ -33,6 +36,12 @@ interface TaskDao {
 
     @Query("UPDATE tasks SET dependsOnTitles = :raw WHERE id = :id")
     suspend fun setDependsOnRaw(id: Long, raw: String)
+
+    @Query("UPDATE tasks SET stepsEdited = :edited WHERE id = :id")
+    suspend fun setStepsEdited(id: Long, edited: Boolean)
+
+    @Query("UPDATE tasks SET quickTidy = :flag WHERE id = :id")
+    suspend fun setQuickTidy(id: Long, flag: Boolean)
 
     @Query("DELETE FROM tasks WHERE id = :id")
     suspend fun delete(id: Long)

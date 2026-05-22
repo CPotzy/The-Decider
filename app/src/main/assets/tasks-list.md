@@ -43,6 +43,9 @@ All registered tasks grouped by recurrence.
 - Face mask
 - Vacuum under bed
 - Mop the floor
+- Clear lounge into the doom pile
+- Clear bedroom into the doom pile
+- Sort the doom pile
 
 ## Biweekly (every 2 weeks)
 - Clean fridge

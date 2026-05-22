@@ -167,6 +167,23 @@ object SeedSteps {
             StepDef("Mop the upstairs floor", 240),
             StepDef("Empty the bucket and put it away", 60),
         ),
+        "Clear lounge into the doom pile" to listOf(
+            StepDef("Grab the doom-pile basket from its spot"),
+            StepDef("5-min sweep: anything not where it lives goes in the basket", 300),
+            StepDef("Park the basket somewhere out of the walkway"),
+        ),
+        "Clear bedroom into the doom pile" to listOf(
+            StepDef("Grab the doom-pile basket from its spot"),
+            StepDef("5-min sweep: anything not where it lives goes in the basket", 300),
+            StepDef("Park the basket somewhere out of the walkway"),
+        ),
+        "Sort the doom pile" to listOf(
+            StepDef("Bring the basket somewhere comfy — couch, table, floor"),
+            StepDef("5-min sort. For each thing: where does it LIVE? Put it there, or set on a 'donate / toss' pile", 300),
+            StepDef("5-min sort again — keep going while you've got the momentum", 300),
+            StepDef("Toss / donate / shelve the leftover piles"),
+            StepDef("Return the basket to its spot"),
+        ),
 
         // Biweekly
         "Clean fridge" to listOf(

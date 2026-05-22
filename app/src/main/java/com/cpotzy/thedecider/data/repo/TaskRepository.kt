@@ -49,6 +49,26 @@ class TaskRepository(
 
     suspend fun listAllRaw(): List<TaskEntity> = taskDao.listAll()
 
+    suspend fun listActiveQuickTidy(): List<Task> {
+        return taskDao.listActiveQuickTidy().map { e ->
+            val lastDone = completionDao.lastOfType(e.id, CompletionType.DONE)
+            Task(
+                id = e.id,
+                title = e.title,
+                cadence = e.cadence,
+                energy = e.energy,
+                duration = e.duration,
+                timeWindow = e.timeWindow,
+                isActive = e.isActive,
+                createdAt = e.createdAt,
+                lastDoneAt = lastDone,
+                dependsOnTitles = e.dependsOnTitles,
+            )
+        }
+    }
+
+    suspend fun setQuickTidy(id: Long, flag: Boolean) = taskDao.setQuickTidy(id, flag)
+
     suspend fun createCustomTask(
         title: String,
         cadence: Cadence,
