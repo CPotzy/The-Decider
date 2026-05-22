@@ -15,9 +15,11 @@ import com.cpotzy.thedecider.domain.select.ModeChip
 import com.cpotzy.thedecider.domain.select.PressureCalculator
 import com.cpotzy.thedecider.domain.select.SelectionService
 import com.cpotzy.thedecider.domain.time.Clock
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import java.time.ZoneId
 
@@ -31,6 +33,7 @@ data class QueueUiState(
     val modeChips: List<ModeChip> = ModeChip.defaults,
     val emptyState: Boolean = false,
     val aheadOfSchedule: Boolean = false,
+    val doneTodayCount: Int = 0,
     val update: UpdateInfo? = null,
     val updateDismissed: Boolean = false,
 ) {
@@ -54,6 +57,9 @@ class QueueViewModel(
 
     private val _state = MutableStateFlow(QueueUiState())
     val state: StateFlow<QueueUiState> = _state.asStateFlow()
+
+    private val _celebrations = Channel<String>(capacity = Channel.BUFFERED)
+    val celebrations = _celebrations.receiveAsFlow()
 
     init {
         refresh()
@@ -94,6 +100,7 @@ class QueueViewModel(
         if (!cur.canMarkDone) return
         viewModelScope.launch {
             completionRepository.markDone(task.id)
+            _celebrations.trySend(randomCelebration())
             refresh()
         }
     }
@@ -115,6 +122,7 @@ class QueueViewModel(
             val now = clock.now()
             val snoozed = snoozeRepository.activeTaskIds(now)
             val eligible = taskRepository.listEligibleForSelection(now)
+            val doneToday = completionRepository.doneTodayCount(zone)
             var ahead = false
             var picked = selectionService.pickNext(
                 candidates = eligible,
@@ -140,6 +148,7 @@ class QueueViewModel(
                     checkedStepIds = emptySet(),
                     emptyState = true,
                     aheadOfSchedule = false,
+                    doneTodayCount = doneToday,
                 )
             } else {
                 val pressure = pressureCalc.pressure(picked, now)
@@ -155,10 +164,24 @@ class QueueViewModel(
                     tier = tier,
                     emptyState = false,
                     aheadOfSchedule = ahead,
+                    doneTodayCount = doneToday,
                 )
             }
         }
     }
 }
+
+private val celebrationLines = listOf(
+    "Nice — one down.",
+    "Boom. Logged.",
+    "That's the move.",
+    "Crossed off.",
+    "Good call.",
+    "Yes.",
+    "Done. Onward.",
+    "Locked in.",
+)
+
+private fun randomCelebration(): String = celebrationLines.random()
 
 enum class SnoozeKindChoice { LATER_TODAY, TOMORROW, SKIP_CYCLE }

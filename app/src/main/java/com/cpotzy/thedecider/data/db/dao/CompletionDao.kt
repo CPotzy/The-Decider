@@ -38,6 +38,12 @@ interface CompletionDao {
     """)
     suspend fun recentWithTitle(limit: Int = 200): List<CompletionWithTitle>
 
+    @Query("""
+        SELECT COUNT(*) FROM completions
+        WHERE type = :type AND completedAt >= :since
+    """)
+    suspend fun countSince(since: Instant, type: CompletionType = CompletionType.DONE): Int
+
     @Query("DELETE FROM completions")
     suspend fun deleteAll()
 }

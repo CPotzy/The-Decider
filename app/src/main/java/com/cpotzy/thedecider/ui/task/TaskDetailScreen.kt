@@ -9,6 +9,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -108,16 +110,34 @@ private fun ChecklistView(
     state: TaskDetailUiState,
     onToggle: (Long) -> Unit,
 ) {
+    val haptic = LocalHapticFeedback.current
+    val done = state.steps.count { it.id in state.checkedStepIds }
+    val total = state.steps.size
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 24.dp),
     ) {
+        Surface(
+            color = MaterialTheme.colorScheme.surfaceVariant,
+            shape = RoundedCornerShape(50),
+            modifier = Modifier.padding(bottom = 16.dp),
+        ) {
+            Text(
+                "$done of $total steps",
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
         state.steps.forEach { step ->
             val checked = step.id in state.checkedStepIds
             Surface(
-                onClick = { onToggle(step.id) },
+                onClick = {
+                    haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                    onToggle(step.id)
+                },
                 shape = RoundedCornerShape(12.dp),
                 tonalElevation = if (checked) 0.dp else 2.dp,
                 color = if (checked)
