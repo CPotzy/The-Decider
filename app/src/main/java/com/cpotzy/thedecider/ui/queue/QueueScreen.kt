@@ -89,10 +89,13 @@ fun QueueScreen(
                 .draggable(
                     state = dragState,
                     orientation = Orientation.Horizontal,
+                    enabled = state.task != null,
                     onDragStopped = {
+                        val currentId = viewModel.currentTaskId()
                         when {
+                            currentId == null -> offsetX = 0f
                             offsetX > swipeThresholdPx -> {
-                                viewModel.currentTaskId()?.let { onAcceptTask(it) }
+                                onAcceptTask(currentId)
                                 offsetX = 0f
                             }
                             offsetX < -swipeThresholdPx -> {

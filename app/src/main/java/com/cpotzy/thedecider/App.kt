@@ -44,6 +44,7 @@ class AppGraph(app: Application) {
     val stepRepository = StepRepository(db.stepDao(), db.taskDao())
     val stepDaoForSeeding = db.stepDao()
     val completionDao = db.completionDao()
+    val snoozeDao = db.snoozeDao()
 
     val pressureCalculator = PressureCalculator()
     val contextFilter = ContextFilter()

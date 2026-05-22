@@ -88,7 +88,11 @@ private fun AppNav(graph: AppGraph) {
             )
         }
         composable("settings") {
-            SettingsScreen(onBack = { navController.popBackStack() })
+            SettingsScreen(
+                onBack = { navController.popBackStack() },
+                completionDao = graph.completionDao,
+                snoozeDao = graph.snoozeDao,
+            )
         }
         composable("history") {
             HistoryScreen(

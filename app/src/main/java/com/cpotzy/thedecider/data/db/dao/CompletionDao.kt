@@ -37,4 +37,7 @@ interface CompletionDao {
         LIMIT :limit
     """)
     suspend fun recentWithTitle(limit: Int = 200): List<CompletionWithTitle>
+
+    @Query("DELETE FROM completions")
+    suspend fun deleteAll()
 }

@@ -10,13 +10,23 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.cpotzy.thedecider.data.db.dao.CompletionDao
+import com.cpotzy.thedecider.data.db.dao.SnoozeDao
 import com.cpotzy.thedecider.work.NudgeSettings
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onBack: () -> Unit) {
+fun SettingsScreen(
+    onBack: () -> Unit,
+    completionDao: CompletionDao,
+    snoozeDao: SnoozeDao,
+) {
     val context = LocalContext.current
     val settings = remember { NudgeSettings(context) }
+    val scope = rememberCoroutineScope()
+    var pendingReset by remember { mutableStateOf(false) }
+    val snackbarHost = remember { SnackbarHostState() }
 
     var windowStart by remember { mutableStateOf(settings.windowStartHour) }
     var windowEnd by remember { mutableStateOf(settings.windowEndHour) }
@@ -31,6 +41,7 @@ fun SettingsScreen(onBack: () -> Unit) {
                 navigationIcon = { TextButton(onClick = onBack) { Text("Back") } },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHost) },
     ) { padding ->
         Column(
             modifier = Modifier
@@ -96,7 +107,41 @@ fun SettingsScreen(onBack: () -> Unit) {
                 minGap = settings.minGapMinutes
                 quietAfterOpen = settings.quietAfterOpenMinutes
             }) { Text("Reset to defaults") }
+
+            Spacer(Modifier.height(24.dp))
+            HorizontalDivider()
+            Spacer(Modifier.height(16.dp))
+            Text("Data", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+            Text(
+                "Clear all completion + snooze history so every task becomes due again. Tasks themselves are kept.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+            )
+            FilledTonalButton(onClick = { pendingReset = true }) {
+                Text("Clear history")
+            }
         }
+    }
+
+    if (pendingReset) {
+        AlertDialog(
+            onDismissRequest = { pendingReset = false },
+            title = { Text("Clear history?") },
+            text = { Text("This deletes every completion and snooze. Your tasks and steps stay. This can't be undone.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    pendingReset = false
+                    scope.launch {
+                        completionDao.deleteAll()
+                        snoozeDao.deleteAll()
+                        snackbarHost.showSnackbar("History cleared")
+                    }
+                }) { Text("Clear") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingReset = false }) { Text("Cancel") }
+            },
+        )
     }
 }
 

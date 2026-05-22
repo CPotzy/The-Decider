@@ -21,4 +21,7 @@ interface SnoozeDao {
         SELECT DISTINCT taskId FROM snoozes WHERE until > :now
     """)
     suspend fun activeTaskIds(now: Instant): List<Long>
+
+    @Query("DELETE FROM snoozes")
+    suspend fun deleteAll()
 }
