@@ -107,13 +107,22 @@ fun QueueScreen(
         ) {
             val task = state.task
             if (task != null) {
-                Box(
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
                         .graphicsLayer(
                             translationX = animatedOffset,
                             rotationZ = animatedOffset / 60f,
                         ),
                 ) {
+                    if (state.aheadOfSchedule) {
+                        Text(
+                            "Ahead of schedule — early start",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                        )
+                        Spacer(Modifier.height(8.dp))
+                    }
                     TaskCard(task = task, tier = state.tier, now = now)
                 }
             } else if (state.emptyState) {

@@ -26,6 +26,7 @@ data class QueueUiState(
     val mode: ModeChip = ModeChip.All,
     val modeChips: List<ModeChip> = ModeChip.defaults,
     val emptyState: Boolean = false,
+    val aheadOfSchedule: Boolean = false,
     val update: UpdateInfo? = null,
     val updateDismissed: Boolean = false,
 )
@@ -84,21 +85,38 @@ class QueueViewModel(
     private fun refresh() {
         viewModelScope.launch {
             val now = clock.now()
-            val candidates = taskRepository.listEligibleForSelection(now)
             val snoozed = snoozeRepository.activeTaskIds(now)
-            val picked = selectionService.pickNext(
-                candidates = candidates,
+            val eligible = taskRepository.listEligibleForSelection(now)
+            var ahead = false
+            var picked = selectionService.pickNext(
+                candidates = eligible,
                 snoozedIds = snoozed,
                 now = now,
                 zone = zone,
                 mode = _state.value.mode,
             )
             if (picked == null) {
-                _state.value = _state.value.copy(task = null, emptyState = true)
+                ahead = true
+                picked = selectionService.pickNext(
+                    candidates = taskRepository.listActiveWithLastDone(),
+                    snoozedIds = snoozed,
+                    now = now,
+                    zone = zone,
+                    mode = _state.value.mode,
+                )
+            }
+            if (picked == null) {
+                _state.value = _state.value.copy(task = null, emptyState = true, aheadOfSchedule = false)
             } else {
                 val pressure = pressureCalc.pressure(picked, now)
                 val tier = PressureTier.forPressure(pressure, picked.cadence)
-                _state.value = _state.value.copy(task = picked, pressure = pressure, tier = tier, emptyState = false)
+                _state.value = _state.value.copy(
+                    task = picked,
+                    pressure = pressure,
+                    tier = tier,
+                    emptyState = false,
+                    aheadOfSchedule = ahead,
+                )
             }
         }
     }
