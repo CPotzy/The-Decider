@@ -131,9 +131,15 @@ object TaskSeeder {
             val raw = rawRows[task.id] ?: return@forEach
             // Once the user has edited steps for this task, leave them alone.
             if (raw.stepsEdited) return@forEach
+            // User-created tasks have no seed entry; never touch their steps.
+            if (raw.isUserCreated) return@forEach
             val seed = SeedSteps.forTitle(task.title)
-            if (seed.isEmpty()) return@forEach
             val existing = stepDao.forTask(task.id)
+            if (seed.isEmpty()) {
+                // Seed-managed task that should be atomic — drop any stale steps.
+                if (existing.isNotEmpty()) stepDao.deleteByTask(task.id)
+                return@forEach
+            }
             val matches = existing.size == seed.size && existing.zip(seed).all { (row, def) ->
                 row.content == def.content &&
                     row.durationSeconds == def.durationSeconds

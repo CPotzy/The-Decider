@@ -18,12 +18,9 @@ object SeedSteps {
         // Daily
         "Vacuum downstairs and upstairs" to listOf(
             StepDef("Clear the floor (buckets, chairs, rubbish bin, coffee table)", 180),
-            StepDef("Get the vacuum out", 30),
-            StepDef("Vacuum downstairs floors", 240),
-            StepDef("Empty the vacuum if full", 60),
+            StepDef("Vacuum downstairs floors", 270),
             StepDef("Vacuum upstairs floors", 240),
-            StepDef("Put the vacuum away", 30),
-            StepDef("Plug the vacuum in to charge", 20),
+            StepDef("Put the vacuum away and plug in to charge", 60),
         ),
         "Wash muci dishes" to listOf(
             StepDef("Collect muci dishes from around the house", 180),
@@ -34,15 +31,13 @@ object SeedSteps {
             StepDef("Wash and stack on the drying rack", 480),
         ),
         "Write journal" to listOf(
-            StepDef("Open the journal", 15),
-            StepDef("Write today's date", 15),
+            StepDef("Open the journal and write today's date", 30),
             StepDef("Write one thing you noticed today", 120),
             StepDef("Write one thing you're grateful for", 120),
         ),
         "Clean kitchen counter" to listOf(
             StepDef("Move items off the counter", 60),
-            StepDef("Spray the counter with cleaner", 30),
-            StepDef("Wipe the counter down", 90),
+            StepDef("Spray and wipe", 120),
             StepDef("Put items back", 60),
         ),
         "Put all dishes away" to listOf(
@@ -76,11 +71,6 @@ object SeedSteps {
             StepDef("Place the selected foods on the plate", 90),
             StepDef("Cover the plate with a clean cloth", 15),
         ),
-        "Listen to a class" to listOf(
-            StepDef("Open YouTube or the app", 30),
-            StepDef("Pick a class", 60),
-            StepDef("Press play", 5),
-        ),
 
         // Bi-daily
         "Fold and iron laundry" to listOf(
@@ -90,16 +80,12 @@ object SeedSteps {
             StepDef("Stack folded clothes by destination drawer", 135),
         ),
         "Take washing out & hang" to listOf(
-            StepDef("Open the washing machine", 10),
-            StepDef("Transfer wet clothes into the basket", 60),
+            StepDef("Empty the machine into the basket", 70),
             StepDef("Hang on the line", 300),
         ),
         "Put washing machine on" to listOf(
             StepDef("Separate whites from colors", 60),
-            StepDef("Load clothes", 60),
-            StepDef("Add detergent", 20),
-            StepDef("Select the cycle", 15),
-            StepDef("Press start", 5),
+            StepDef("Load, add detergent, pick cycle, start", 90),
         ),
         "Take washing in" to listOf(
             StepDef("Gather clothes off the line", 240),
@@ -112,12 +98,11 @@ object SeedSteps {
 
         // Weekly
         "Clean bathroom" to listOf(
-            StepDef("Spray toilet cleaner and leave", 30),
+            StepDef("Spray toilet cleaner and leave it to work", 30),
             StepDef("Wipe sink and mirror", 180),
             StepDef("Scrub the toilet bowl", 120),
             StepDef("Wipe the floor", 180),
-            StepDef("Take out bathroom trash", 60),
-            StepDef("Put in a fresh bin liner", 30),
+            StepDef("Empty bathroom bin and put in a fresh liner", 90),
         ),
         "Change bed sheets and vacuum bed" to listOf(
             StepDef("Strip the sheets", 120),
@@ -219,12 +204,10 @@ object SeedSteps {
 
         // Bimonthly
         "Clean windows (inside)" to listOf(
-            StepDef("Spray cleaner inside", 120),
-            StepDef("Wipe inside in S-pattern", 600),
+            StepDef("Spray and wipe inside in S-pattern, pane by pane", 720),
         ),
         "Clean windows (outside)" to listOf(
-            StepDef("Spray cleaner outside", 120),
-            StepDef("Wipe outside in S-pattern", 600),
+            StepDef("Spray and wipe outside in S-pattern, pane by pane", 720),
         ),
     )
 
