@@ -254,7 +254,65 @@ Tomorrow at 09:00 after doing everything tonight: queue runs again, almost every
 
 ---
 
-## 10. Quick reference: what triggers a refresh?
+## 10. After selection: the per-step timer
+
+Once you start a task, each step can have a `durationSeconds` target. In **Focus mode** (toggle in the task detail top bar), one step is shown at a time alongside a timer. The timer is gentle pressure, not a strict deadline.
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle: surfaceVariant tint<br/>shows 'Target: MM:SS' or 'No target — just press start'
+    Running: green tint<br/>counts down remaining (or up if no target)
+    Overrun: amber tint<br/>shows '+MM:SS' over target
+    Paused: green tint frozen
+    Idle --> Running: Start
+    Running --> Paused: Pause
+    Paused --> Running: Resume
+    Running --> Overrun: elapsed > target
+    Overrun --> Paused: Pause
+    Running --> Idle: Reset
+    Paused --> Idle: Reset
+    Overrun --> Idle: Reset
+    Running --> [*]: change step or leave focus
+    Paused --> [*]: change step or leave focus
+    Overrun --> [*]: change step or leave focus
+```
+
+Behavior notes:
+
+| Aspect              | Detail                                                                 |
+|---------------------|------------------------------------------------------------------------|
+| Target source       | `StepEntity.durationSeconds` (set in `SeedSteps.kt`)                   |
+| Tick rate           | 100 ms (smooth countdown, low CPU)                                     |
+| No-target steps     | Timer becomes a plain stopwatch — counts up only                       |
+| Overrun visual      | Background flips to amber, label shows `+MM:SS` past target            |
+| Per-step state      | `running`/`elapsedMs` are keyed by `step.id` — switching step resets   |
+| Persistence         | None — pause/exit loses the elapsed time. Intentional: it's a nudge, not a tracker |
+
+The Done-with-step button is independent of the timer — you can mark a step done before the target runs out, or let it overrun and still mark it done. The timer never blocks completion.
+
+```mermaid
+flowchart LR
+    A[Step shown in focus mode] --> B{durationSeconds set?}
+    B -->|yes| C[Show 'Target: X:XX']
+    B -->|no| D[Show 'No target — just press start']
+    C --> E[Press Start]
+    D --> E
+    E --> F[Tick every 100ms]
+    F --> G{elapsed >= target?}
+    G -->|no, count down| F
+    G -->|yes, count up| H[Amber tint, '+X:XX']
+    H --> F
+    F -.->|tap Pause| I[Frozen]
+    F -.->|tap Done| J[Step checked]
+    H -.->|tap Done| J
+```
+
+The point: the timer is a **prompt**, not a stopwatch you have to satisfy. ADHD-friendly framing — most steps in `SeedSteps.kt` are intentionally a touch tight so the running clock creates light forward momentum without becoming a deadline you can fail.
+
+---
+
+## 11. Quick reference: what triggers a refresh?
 
 | Event                              | Triggers refresh? |
 |------------------------------------|-------------------|
