@@ -4,7 +4,8 @@ All registered tasks grouped by recurrence.
 
 ## Daily
 - Vacuum downstairs and upstairs
-- Dishes (muci & suci)
+- Wash muci dishes
+- Wash suci dishes
 - Write journal
 - Clean kitchen counter
 - Put all dishes away

@@ -25,14 +25,13 @@ object SeedSteps {
             StepDef("Put the vacuum away", 30),
             StepDef("Plug the vacuum in to charge", 20),
         ),
-        "Dishes (muci & suci)" to listOf(
-            StepDef("Collect all dirty dishes from around the house", 180),
-            StepDef("Scrape food into compost", 60),
-            StepDef("Soap and sponge muci (impure)", 180),
-            StepDef("Rinse muci", 60),
-            StepDef("Soap and sponge suci (pure)", 180),
-            StepDef("Rinse suci", 60),
-            StepDef("Stack on drying rack", 60),
+        "Wash muci dishes" to listOf(
+            StepDef("Collect muci dishes from around the house", 180),
+            StepDef("Wash and stack on the drying rack", 480),
+        ),
+        "Wash suci dishes" to listOf(
+            StepDef("Collect suci dishes from around the house", 180),
+            StepDef("Wash and stack on the drying rack", 480),
         ),
         "Write journal" to listOf(
             StepDef("Open the journal", 15),

@@ -15,7 +15,8 @@ object SeedQuickTidy {
         "Clean kitchen counter",
         "Put all dishes away",
         "Clean up workspace",
-        "Dishes (muci & suci)",
+        "Wash muci dishes",
+        "Wash suci dishes",
         // Doom-pile collects (the basket sweep is exactly a "make it presentable" pass)
         "Clear lounge into the doom pile",
         "Clear bedroom into the doom pile",
