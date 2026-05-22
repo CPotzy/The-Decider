@@ -4,7 +4,6 @@ import com.cpotzy.thedecider.domain.model.PressureTier
 import com.cpotzy.thedecider.domain.model.Task
 import java.time.Instant
 import java.time.ZoneId
-import kotlin.random.Random
 
 class SelectionService(
     private val pressureCalc: PressureCalculator,
@@ -18,7 +17,6 @@ class SelectionService(
         now: Instant,
         zone: ZoneId,
         mode: ModeChip,
-        random: Random = Random.Default,
     ): Task? {
         val currentLocalTime = now.atZone(zone).toLocalTime()
         val scored = candidates
@@ -31,33 +29,22 @@ class SelectionService(
             }
             .toList()
         if (scored.isEmpty()) return null
-        val tierOrder = listOf(PressureTier.OVERDUE, PressureTier.IN_WINDOW, PressureTier.ANYTIME)
-        for (tier in tierOrder) {
-            val bucket = scored.filter { it.tier == tier }
-            if (bucket.isNotEmpty()) {
-                return weightedPick(bucket, random)
-            }
-        }
-        return null
+        return orderedHead(scored)?.task
     }
 
-    private fun weightedPick(bucket: List<Scored>, random: Random): Task {
-        val weights = bucket.map { scored ->
-            val cadenceDays = scored.task.cadence.cadenceDays
-            if (cadenceDays == null) {
-                scored.pressure + 1.0
-            } else {
-                val daysLate = scored.pressure * cadenceDays
-                kotlin.math.sqrt(daysLate) + 1.0
-            }
-        }
-        val totalWeight = weights.sum()
-        val roll = random.nextDouble() * totalWeight
-        var acc = 0.0
-        weights.forEachIndexed { i, w ->
-            acc += w
-            if (roll <= acc) return bucket[i].task
-        }
-        return bucket.last().task
+    private fun orderedHead(scored: List<Scored>): Scored? {
+        // Deterministic ordering: tier (OVERDUE > IN_WINDOW > ANYTIME),
+        // then pressure desc, then task id asc for a stable tiebreak.
+        // Same plan until something is done/skipped/snoozed.
+        val tierRank = mapOf(
+            PressureTier.OVERDUE to 0,
+            PressureTier.IN_WINDOW to 1,
+            PressureTier.ANYTIME to 2,
+        )
+        return scored.minWithOrNull(
+            compareBy<Scored> { tierRank[it.tier] ?: 99 }
+                .thenByDescending { it.pressure }
+                .thenBy { it.task.id }
+        )
     }
 }

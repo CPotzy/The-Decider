@@ -12,7 +12,6 @@ import org.junit.Test
 import java.time.Instant
 import java.time.ZoneId
 import java.time.temporal.ChronoUnit
-import kotlin.random.Random
 
 class SelectionServiceTest {
     private val now = Instant.parse("2026-05-21T10:00:00Z")
@@ -37,14 +36,13 @@ class SelectionServiceTest {
             now = now,
             zone = zone,
             mode = ModeChip.All,
-            random = Random(0),
         )
         assertNull(picked)
     }
 
     @Test fun `excludes snoozed tasks`() {
         val candidates = listOf(task(1, Cadence.DAILY, now.minus(3, ChronoUnit.DAYS)))
-        val picked = service.pickNext(candidates, setOf(1L), now, zone, ModeChip.All, Random(0))
+        val picked = service.pickNext(candidates, setOf(1L), now, zone, ModeChip.All)
         assertNull(picked)
     }
 
@@ -53,13 +51,13 @@ class SelectionServiceTest {
             task(1, Cadence.DAILY, now.minus(1, ChronoUnit.HOURS)),
             task(2, Cadence.DAILY, now.minus(5, ChronoUnit.DAYS)),
         )
-        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All, Random(0))
+        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
         assertEquals(2L, picked?.id)
     }
 
     @Test fun `falls back to anytime tier when nothing else`() {
         val candidates = listOf(task(1, Cadence.ANYTIME, null))
-        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All, Random(0))
+        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
         assertNotNull(picked)
         assertEquals(1L, picked?.id)
     }
@@ -69,23 +67,35 @@ class SelectionServiceTest {
             task(1, Cadence.DAILY, now.minus(5, ChronoUnit.DAYS), energy = Energy.HIGH),
             task(2, Cadence.DAILY, now.minus(5, ChronoUnit.DAYS), energy = Energy.LOW),
         )
-        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.LowEnergy, Random(0))
+        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.LowEnergy)
         assertEquals(2L, picked?.id)
     }
 
-    @Test fun `weighted random within tier is deterministic given seed`() {
+    @Test fun `selection is deterministic across repeated calls`() {
         val candidates = listOf(
             task(1, Cadence.DAILY, now.minus(5, ChronoUnit.DAYS)),
             task(2, Cadence.DAILY, now.minus(5, ChronoUnit.DAYS)),
         )
-        val first = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All, Random(42))
-        val second = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All, Random(42))
+        val first = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
+        val second = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
+        val third = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
         assertEquals(first?.id, second?.id)
+        assertEquals(second?.id, third?.id)
+    }
+
+    @Test fun `higher pressure wins within same tier`() {
+        // Both are overdue but task 2 is more overdue → should be picked first.
+        val candidates = listOf(
+            task(1, Cadence.DAILY, now.minus(2, ChronoUnit.DAYS)),
+            task(2, Cadence.DAILY, now.minus(10, ChronoUnit.DAYS)),
+        )
+        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
+        assertEquals(2L, picked?.id)
     }
 
     @Test fun `daily done today is excluded from candidates by caller`() {
         val candidates = listOf(task(1, Cadence.DAILY, now))
-        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All, Random(0))
+        val picked = service.pickNext(candidates, emptySet(), now, zone, ModeChip.All)
         assertEquals(1L, picked?.id)
     }
 }

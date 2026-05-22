@@ -111,7 +111,11 @@ class QueueViewModel(
             when (kind) {
                 SnoozeKindChoice.LATER_TODAY -> snoozeRepository.snoozeLaterToday(current.id)
                 SnoozeKindChoice.TOMORROW -> snoozeRepository.snoozeTomorrow(current.id, zone)
-                SnoozeKindChoice.SKIP_CYCLE -> completionRepository.markSkippedKeepPressure(current.id)
+                SnoozeKindChoice.SKIP_CYCLE -> {
+                    completionRepository.markSkippedKeepPressure(current.id)
+                    // Skip leaves today's plan; pressure stays for tomorrow's eligibility.
+                    snoozeRepository.snoozeTomorrow(current.id, zone)
+                }
             }
             refresh()
         }
