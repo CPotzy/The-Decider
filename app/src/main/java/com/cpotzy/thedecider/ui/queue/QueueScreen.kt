@@ -2,7 +2,8 @@ package com.cpotzy.thedecider.ui.queue
 
 import android.content.Intent
 import android.net.Uri
-import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
@@ -38,7 +39,9 @@ import com.cpotzy.thedecider.ui.quickadd.QuickAddSheet
 import com.cpotzy.thedecider.ui.queue.components.ModeChipRow
 import com.cpotzy.thedecider.ui.queue.components.SwipeChooserSheet
 import com.cpotzy.thedecider.ui.queue.components.TaskCard
+import kotlinx.coroutines.launch
 import java.time.Instant
+import kotlin.math.abs
 
 @Composable
 fun QueueScreen(
@@ -51,17 +54,20 @@ fun QueueScreen(
     now: Instant = Instant.now(),
 ) {
     val state by viewModel.state.collectAsState()
-    var offsetX by remember { mutableStateOf(0f) }
+    val offsetX = remember { Animatable(0f) }
     var showChooser by remember { mutableStateOf(false) }
     var showQuickAdd by remember { mutableStateOf(false) }
     val density = LocalDensity.current
     val swipeThresholdPx = with(density) { 120.dp.toPx() }
-    val animatedOffset by animateFloatAsState(targetValue = offsetX, label = "swipeOffset")
+    val coroutineScope = rememberCoroutineScope()
 
-    val dragState = rememberDraggableState { delta -> offsetX += delta }
+    val dragState = rememberDraggableState { delta ->
+        coroutineScope.launch { offsetX.snapTo(offsetX.value + delta) }
+    }
     val context = LocalContext.current
     val haptic = LocalHapticFeedback.current
     val snackbarHost = remember { SnackbarHostState() }
+    val dragProgress = (abs(offsetX.value) / swipeThresholdPx).coerceIn(0f, 1f)
 
     LaunchedEffect(Unit) { viewModel.onResume() }
     LaunchedEffect(Unit) {
@@ -113,41 +119,70 @@ fun QueueScreen(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f)
-                    .draggable(
-                        state = dragState,
-                        orientation = Orientation.Horizontal,
-                        enabled = state.task != null,
-                        onDragStopped = {
-                            val currentId = viewModel.currentTaskId()
-                            when {
-                                currentId == null -> offsetX = 0f
-                                offsetX > swipeThresholdPx -> {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onAcceptTask(currentId)
-                                    offsetX = 0f
-                                }
-                                offsetX < -swipeThresholdPx -> {
-                                    haptic.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    showChooser = true
-                                    offsetX = 0f
-                                }
-                                else -> offsetX = 0f
-                            }
-                        },
-                    ),
-                contentAlignment = Alignment.Center,
+                    .weight(1f),
+                contentAlignment = Alignment.TopCenter,
             ) {
+                // Back card — next task peeks out, rises as you drag the front away.
+                state.nextTask?.let { next ->
+                    TaskCard(
+                        task = next,
+                        tier = state.nextTier,
+                        now = now,
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .graphicsLayer {
+                                val s = 0.94f + dragProgress * 0.05f
+                                scaleX = s
+                                scaleY = s
+                                alpha = 0.4f + dragProgress * 0.55f
+                                translationY = 18.dp.toPx() * (1f - dragProgress)
+                            },
+                    )
+                }
+
                 val task = state.task
                 if (task != null) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
                             .fillMaxSize()
-                            .graphicsLayer(
-                                translationX = animatedOffset,
-                                rotationZ = animatedOffset / 60f,
-                            ),
+                            .draggable(
+                                state = dragState,
+                                orientation = Orientation.Horizontal,
+                                enabled = true,
+                                onDragStopped = {
+                                    when {
+                                        offsetX.value > swipeThresholdPx -> {
+                                            if (state.canMarkDone) {
+                                                haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                offsetX.animateTo(1600f, tween(180))
+                                                viewModel.markCurrentDone()
+                                                offsetX.snapTo(0f)
+                                            } else {
+                                                haptic.performHapticFeedback(HapticFeedbackType.TextHandleMove)
+                                                // Shake-bounce: visible "no, can't"
+                                                offsetX.animateTo(50f, tween(40))
+                                                offsetX.animateTo(-35f, tween(60))
+                                                offsetX.animateTo(22f, tween(50))
+                                                offsetX.animateTo(-12f, tween(40))
+                                                offsetX.animateTo(0f, tween(80))
+                                            }
+                                        }
+                                        offsetX.value < -swipeThresholdPx -> {
+                                            haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                                            offsetX.animateTo(0f, tween(150))
+                                            showChooser = true
+                                        }
+                                        else -> {
+                                            offsetX.animateTo(0f, tween(180))
+                                        }
+                                    }
+                                },
+                            )
+                            .graphicsLayer {
+                                translationX = offsetX.value
+                                rotationZ = offsetX.value / 60f
+                            },
                     ) {
                         if (state.aheadOfSchedule) {
                             AheadOfScheduleHint()

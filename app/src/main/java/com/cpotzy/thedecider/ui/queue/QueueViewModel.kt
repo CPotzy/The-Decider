@@ -29,6 +29,8 @@ data class QueueUiState(
     val checkedStepIds: Set<Long> = emptySet(),
     val pressure: Double = 0.0,
     val tier: PressureTier = PressureTier.IN_WINDOW,
+    val nextTask: Task? = null,
+    val nextTier: PressureTier = PressureTier.IN_WINDOW,
     val mode: ModeChip = ModeChip.All,
     val modeChips: List<ModeChip> = ModeChip.defaults,
     val emptyState: Boolean = false,
@@ -155,6 +157,8 @@ class QueueViewModel(
                     task = null,
                     steps = emptyList(),
                     checkedStepIds = emptySet(),
+                    nextTask = null,
+                    nextTier = PressureTier.IN_WINDOW,
                     emptyState = true,
                     aheadOfSchedule = false,
                     doneTodayCount = doneToday,
@@ -165,12 +169,25 @@ class QueueViewModel(
                 val previousTaskId = _state.value.task?.id
                 val steps = stepRepository.stepsFor(picked.id)
                 val checked = if (previousTaskId == picked.id) _state.value.checkedStepIds else emptySet()
+                val pickedId = picked.id
+                val nextPicked = selectionService.pickNext(
+                    candidates = candidates.filter { it.id != pickedId },
+                    snoozedIds = snoozed,
+                    now = now,
+                    zone = zone,
+                    mode = mode,
+                )
+                val nextTier = nextPicked?.let { n ->
+                    PressureTier.forPressure(pressureCalc.pressure(n, now), n.cadence)
+                } ?: PressureTier.IN_WINDOW
                 _state.value = _state.value.copy(
                     task = picked,
                     steps = steps,
                     checkedStepIds = checked,
                     pressure = pressure,
                     tier = tier,
+                    nextTask = nextPicked,
+                    nextTier = nextTier,
                     emptyState = false,
                     aheadOfSchedule = ahead,
                     doneTodayCount = doneToday,
