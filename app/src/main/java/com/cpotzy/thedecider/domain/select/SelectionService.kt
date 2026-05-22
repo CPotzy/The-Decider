@@ -42,7 +42,15 @@ class SelectionService(
     }
 
     private fun weightedPick(bucket: List<Scored>, random: Random): Task {
-        val weights = bucket.map { it.pressure + 1.0 }
+        val weights = bucket.map { scored ->
+            val cadenceDays = scored.task.cadence.cadenceDays
+            if (cadenceDays == null) {
+                scored.pressure + 1.0
+            } else {
+                val daysLate = scored.pressure * cadenceDays
+                kotlin.math.sqrt(daysLate) + 1.0
+            }
+        }
         val totalWeight = weights.sum()
         val roll = random.nextDouble() * totalWeight
         var acc = 0.0

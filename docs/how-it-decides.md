@@ -166,6 +166,13 @@ pressure = max(0, (daysSinceRef - cadenceDays) / cadenceDays)
 - Two cadences overdue: `pressure = 2.0`
 - ANYTIME tasks: fixed `0.05` (always selectable but low priority)
 
+**Tier escalation** (current rule):
+- `pressure == 0` → IN_WINDOW
+- `pressure > 0` (any past-due, even 1 day late on a monthly) → OVERDUE
+- ANYTIME / ONEOFF → ANYTIME
+
+A monthly task overdue by 5 days enters OVERDUE immediately rather than waiting 60 days for `pressure > 1.0`.
+
 Pressure feeds two things:
 - **Tier** for selection bucketing
 - **Tint** on the task card (visible only as color, not as a number)
@@ -197,7 +204,24 @@ flowchart TD
     G -->|no| I[Return null -> trigger fallback]
 ```
 
-`weightedPick`: each task in the bucket gets a weight of `pressure + 1.0`, then a uniform random roll picks one proportional to its weight. So within a tier, more-overdue tasks are likelier but not certain — keeps the queue from feeling deterministic.
+`weightedPick`: each task in the bucket gets a weight based on **absolute days late** with sqrt damping, so cadences compete fairly:
+
+```
+weight = sqrt(pressure × cadenceDays) + 1.0     // for cadence tasks
+weight = pressure + 1.0                         // for ANYTIME (no cadence)
+```
+
+Worked weights:
+
+| Task                       | daysLate | weight                |
+|----------------------------|----------|-----------------------|
+| Daily, +1 day late         | 1        | sqrt(1) + 1 = 2.00    |
+| Weekly, +3 days late       | 3        | sqrt(3) + 1 = 2.73    |
+| Weekly, +7 days late       | 7        | sqrt(7) + 1 = 3.65    |
+| Monthly, +5 days late      | 5        | sqrt(5) + 1 = 3.24    |
+| Monthly, +30 days late     | 30       | sqrt(30) + 1 = 6.48   |
+
+Effect: a monthly task that's two weeks past its cycle now outweighs a daily task that's only one day past. Without sqrt damping a 30-day-late monthly would obliterate everything else; with it, urgency rises but the queue stays varied.
 
 ---
 
