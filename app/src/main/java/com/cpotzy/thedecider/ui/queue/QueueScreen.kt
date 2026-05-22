@@ -3,11 +3,16 @@ package com.cpotzy.thedecider.ui.queue
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.IconButton
@@ -15,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -113,6 +119,7 @@ fun QueueScreen(
                 Column(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
+                        .fillMaxSize()
                         .graphicsLayer(
                             translationX = animatedOffset,
                             rotationZ = animatedOffset / 60f,
@@ -126,7 +133,45 @@ fun QueueScreen(
                         )
                         Spacer(Modifier.height(8.dp))
                     }
-                    TaskCard(task = task, tier = state.tier, now = now)
+                    TaskCard(
+                        task = task,
+                        tier = state.tier,
+                        now = now,
+                        modifier = Modifier.clickable { onAcceptTask(task.id) },
+                    )
+                    if (state.steps.isNotEmpty()) {
+                        Spacer(Modifier.height(16.dp))
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(horizontal = 24.dp),
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            items(state.steps, key = { it.id }) { step ->
+                                val checked = step.id in state.checkedStepIds
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clickable { viewModel.toggleStep(step.id) }
+                                        .padding(vertical = 4.dp),
+                                ) {
+                                    Checkbox(checked = checked, onCheckedChange = { viewModel.toggleStep(step.id) })
+                                    Spacer(Modifier.width(8.dp))
+                                    Text(
+                                        step.content,
+                                        style = MaterialTheme.typography.bodyLarge.copy(
+                                            textDecoration = if (checked) TextDecoration.LineThrough else null,
+                                        ),
+                                        color = if (checked)
+                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+                                        else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             } else if (state.emptyState) {
                 Column(
@@ -151,6 +196,7 @@ fun QueueScreen(
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             TextButton(
                 onClick = { if (state.task != null) showChooser = true },
@@ -162,7 +208,13 @@ fun QueueScreen(
                 onClick = { viewModel.currentTaskId()?.let { onAcceptTask(it) } },
                 enabled = state.task != null,
             ) {
-                Text("start →", style = MaterialTheme.typography.titleLarge)
+                Text("Focus", style = MaterialTheme.typography.titleMedium)
+            }
+            Button(
+                onClick = { viewModel.markCurrentDone() },
+                enabled = state.canMarkDone,
+            ) {
+                Text("Done", style = MaterialTheme.typography.titleLarge)
             }
         }
         Spacer(Modifier.height(16.dp))

@@ -69,6 +69,7 @@ private fun AppNav(graph: AppGraph) {
                                 taskRepository = graph.taskRepository,
                                 completionRepository = graph.completionRepository,
                                 snoozeRepository = graph.snoozeRepository,
+                                stepRepository = graph.stepRepository,
                                 selectionService = graph.selectionService,
                                 pressureCalc = graph.pressureCalculator,
                                 updateChecker = graph.updateChecker,

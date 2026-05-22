@@ -2,8 +2,10 @@ package com.cpotzy.thedecider.ui.queue
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.cpotzy.thedecider.data.db.entities.StepEntity
 import com.cpotzy.thedecider.data.repo.CompletionRepository
 import com.cpotzy.thedecider.data.repo.SnoozeRepository
+import com.cpotzy.thedecider.data.repo.StepRepository
 import com.cpotzy.thedecider.data.repo.TaskRepository
 import com.cpotzy.thedecider.data.update.UpdateChecker
 import com.cpotzy.thedecider.data.update.UpdateInfo
@@ -21,6 +23,8 @@ import java.time.ZoneId
 
 data class QueueUiState(
     val task: Task? = null,
+    val steps: List<StepEntity> = emptyList(),
+    val checkedStepIds: Set<Long> = emptySet(),
     val pressure: Double = 0.0,
     val tier: PressureTier = PressureTier.IN_WINDOW,
     val mode: ModeChip = ModeChip.All,
@@ -29,12 +33,18 @@ data class QueueUiState(
     val aheadOfSchedule: Boolean = false,
     val update: UpdateInfo? = null,
     val updateDismissed: Boolean = false,
-)
+) {
+    val allStepsChecked: Boolean
+        get() = steps.isNotEmpty() && steps.all { it.id in checkedStepIds }
+    val canMarkDone: Boolean
+        get() = task != null && (steps.isEmpty() || allStepsChecked)
+}
 
 class QueueViewModel(
     private val taskRepository: TaskRepository,
     private val completionRepository: CompletionRepository,
     private val snoozeRepository: SnoozeRepository,
+    private val stepRepository: StepRepository,
     private val selectionService: SelectionService,
     private val pressureCalc: PressureCalculator,
     private val updateChecker: UpdateChecker,
@@ -69,6 +79,24 @@ class QueueViewModel(
     }
 
     fun currentTaskId(): Long? = _state.value.task?.id
+
+    fun toggleStep(stepId: Long) {
+        val cur = _state.value
+        val checked = cur.checkedStepIds
+        _state.value = cur.copy(
+            checkedStepIds = if (stepId in checked) checked - stepId else checked + stepId,
+        )
+    }
+
+    fun markCurrentDone() {
+        val cur = _state.value
+        val task = cur.task ?: return
+        if (!cur.canMarkDone) return
+        viewModelScope.launch {
+            completionRepository.markDone(task.id)
+            refresh()
+        }
+    }
 
     fun snoozeCurrent(kind: SnoozeKindChoice) {
         val current = _state.value.task ?: return
@@ -106,12 +134,23 @@ class QueueViewModel(
                 )
             }
             if (picked == null) {
-                _state.value = _state.value.copy(task = null, emptyState = true, aheadOfSchedule = false)
+                _state.value = _state.value.copy(
+                    task = null,
+                    steps = emptyList(),
+                    checkedStepIds = emptySet(),
+                    emptyState = true,
+                    aheadOfSchedule = false,
+                )
             } else {
                 val pressure = pressureCalc.pressure(picked, now)
                 val tier = PressureTier.forPressure(pressure, picked.cadence)
+                val previousTaskId = _state.value.task?.id
+                val steps = stepRepository.stepsFor(picked.id)
+                val checked = if (previousTaskId == picked.id) _state.value.checkedStepIds else emptySet()
                 _state.value = _state.value.copy(
                     task = picked,
+                    steps = steps,
+                    checkedStepIds = checked,
                     pressure = pressure,
                     tier = tier,
                     emptyState = false,
