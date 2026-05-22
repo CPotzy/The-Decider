@@ -11,6 +11,7 @@ import com.cpotzy.thedecider.domain.model.Task
 import com.cpotzy.thedecider.domain.model.TimeWindow
 import com.cpotzy.thedecider.domain.time.Clock
 import java.time.Instant
+import java.time.ZoneId
 import java.time.temporal.ChronoUnit
 
 class TaskRepository(
@@ -68,6 +69,8 @@ class TaskRepository(
     }
 
     suspend fun listEligibleForSelection(now: Instant = clock.now()): List<Task> {
+        val zone = ZoneId.systemDefault()
+        val today = now.atZone(zone).toLocalDate()
         val all = listActiveWithLastDone()
         val byTitle = all.associateBy { it.title }
         return all.filter { task ->
@@ -76,14 +79,16 @@ class TaskRepository(
                 true
             } else {
                 val ref = task.lastDoneAt ?: task.createdAt
-                ChronoUnit.HOURS.between(ref, now) >= cadenceDays * 24
+                val refDay = ref.atZone(zone).toLocalDate()
+                ChronoUnit.DAYS.between(refDay, today) >= cadenceDays
             }
             if (!cadencePass) return@filter false
             task.dependsOnTitles.all { depTitle ->
                 val dep = byTitle[depTitle] ?: return@all true
                 val depDone = dep.lastDoneAt ?: return@all false
                 val depCadenceDays = dep.cadence.cadenceDays ?: return@all true
-                ChronoUnit.HOURS.between(depDone, now) < depCadenceDays * 24
+                val depDoneDay = depDone.atZone(zone).toLocalDate()
+                ChronoUnit.DAYS.between(depDoneDay, today) < depCadenceDays
             }
         }
     }

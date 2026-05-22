@@ -44,20 +44,25 @@ Each task has a cadence with a `cadenceDays` value:
 | ANYTIME    | `null`        |
 | ONEOFF     | `null`        |
 
-A task is **cadence-eligible** when enough time has passed since it was last done (or since it was created, if never done).
+A task is **cadence-eligible** when enough **calendar days** have passed since it was last done (or since it was created, if never done). Eligibility resets at local midnight, not on a 24-hour clock — so brushing your teeth at 11 p.m. doesn't push tomorrow's brush until 11 p.m. the next day.
 
 ```mermaid
 flowchart TD
     A[Task] --> B{cadenceDays is null?}
     B -->|yes ANYTIME / ONEOFF| C[Eligible]
     B -->|no| D[ref = lastDoneAt ?? createdAt]
-    D --> E[hoursSince = now - ref]
-    E --> F{hoursSince >= cadenceDays * 24?}
+    D --> E[daysBetween = today - ref local-day in system zone]
+    E --> F{daysBetween >= cadenceDays?}
     F -->|yes| C
     F -->|no| G[Not eligible yet]
 ```
 
-Example: Vacuum is DAILY (1). Done at 10 a.m. yesterday → eligible again at 10 a.m. today.
+Examples:
+- Vacuum is DAILY (1). Done yesterday → eligible today, any hour.
+- Done at 11:50 p.m. Monday → eligible at 00:00 Tuesday.
+- BIDAILY task done Monday → eligible Wednesday onward.
+
+Pressure (next section) still ticks up continuously in hours, so a long-overdue task keeps escalating day by day even after it becomes eligible.
 
 ---
 
@@ -85,7 +90,7 @@ Currently seeded:
 |----------------|-----------------------------------|
 | Mop the floor  | Vacuum downstairs and upstairs    |
 
-Mop only appears in the queue if Vacuum was done within the last 24 hours.
+Mop only appears if Vacuum was done within the prerequisite's cadence window in calendar days. Vacuum is DAILY (1), so Mop requires Vacuum to have been done **today**.
 
 ---
 
